@@ -2,66 +2,98 @@
 import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
+import { toast } from '@/components/ui/sonner';
 
 interface Province {
   name: string;
   coordinates: [number, number];
   description: string;
+  code: string; // Añadimos el código de provincia para los archivos JSON
 }
 
-// Mantenemos el array de provincias para la información de cada una
+// Mantenemos el array de provincias con información y añadimos códigos para los archivos
 const provinces: Province[] = [
-  { name: 'Buenos Aires', coordinates: [-60.0000, -36.0000], description: 'La provincia más poblada de Argentina, sede de importantes centros urbanos e industriales.' },
-  { name: 'Córdoba', coordinates: [-64.1833, -31.4167], description: 'Centro cultural y educativo, conocida por sus sierras y universidades.' },
-  { name: 'Santa Fe', coordinates: [-60.6667, -31.6333], description: 'Principal centro agroindustrial y puerto importante del país.' },
-  { name: 'Mendoza', coordinates: [-68.8333, -32.8833], description: 'Famosa por sus viñedos y el Monte Aconcagua.' },
-  { name: 'Tucumán', coordinates: [-65.2167, -26.8167], description: 'El jardín de la República, cuna de la independencia argentina.' },
-  { name: 'Entre Ríos', coordinates: [-58.2333, -31.7333], description: 'Tierra de suaves colinas y ríos caudalosos.' },
-  { name: 'Salta', coordinates: [-65.4167, -24.7833], description: 'La Linda, conocida por su rica arquitectura colonial y paisajes.' },
-  { name: 'Misiones', coordinates: [-54.5167, -26.9167], description: 'Hogar de las Cataratas del Iguazú y selvas subtropicales.' },
-  { name: 'Chaco', coordinates: [-59.0333, -27.4500], description: 'Región de gran diversidad cultural y natural.' },
-  { name: 'Santiago del Estero', coordinates: [-64.2667, -27.7833], description: 'La Madre de Ciudades, primera ciudad fundada en Argentina.' },
-  { name: 'San Juan', coordinates: [-68.5167, -31.5333], description: 'Tierra del sol y del buen vino.' },
-  { name: 'Jujuy', coordinates: [-65.2997, -24.1858], description: 'Famosa por la Quebrada de Humahuaca y sus cerros multicolores.' },
-  { name: 'Río Negro', coordinates: [-67.0833, -40.8000], description: 'Destino turístico con hermosos lagos y montañas.' },
-  { name: 'Neuquén', coordinates: [-68.0591, -38.9516], description: 'Centro de deportes de invierno y paleontología.' },
-  { name: 'Formosa', coordinates: [-58.1781, -26.1775], description: 'Rica en biodiversidad y culturas originarias.' },
-  { name: 'Chubut', coordinates: [-65.1026, -43.3002], description: 'Hogar de la ballena franca austral y pingüinos.' },
-  { name: 'San Luis', coordinates: [-66.3356, -33.3022], description: 'Provincia de las sierras y los diques.' },
-  { name: 'Corrientes', coordinates: [-58.8344, -27.4806], description: 'Tierra del Chamamé y los Esteros del Iberá.' },
-  { name: 'La Pampa', coordinates: [-64.2875, -36.6167], description: 'Corazón de la región pampeana argentina.' },
-  { name: 'Catamarca', coordinates: [-65.7859, -28.4696], description: 'Tierra de antiguos pueblos y paisajes lunares.' },
-  { name: 'La Rioja', coordinates: [-66.8511, -29.4131], description: 'Provincia de parques naturales y viñedos.' },
-  { name: 'Santa Cruz', coordinates: [-69.2166, -48.8166], description: 'Hogar del Glaciar Perito Moreno.' },
-  { name: 'Tierra del Fuego', coordinates: [-67.7000, -54.8000], description: 'El fin del mundo, punto más austral de Argentina.' }
+  { name: 'Buenos Aires', coordinates: [-60.0000, -36.0000], description: 'La provincia más poblada de Argentina, sede de importantes centros urbanos e industriales.', code: 'BUENOSAIRES' },
+  { name: 'Córdoba', coordinates: [-64.1833, -31.4167], description: 'Centro cultural y educativo, conocida por sus sierras y universidades.', code: 'CORDOBA' },
+  { name: 'Santa Fe', coordinates: [-60.6667, -31.6333], description: 'Principal centro agroindustrial y puerto importante del país.', code: 'SANTAFE' },
+  { name: 'Mendoza', coordinates: [-68.8333, -32.8833], description: 'Famosa por sus viñedos y el Monte Aconcagua.', code: 'MENDOZA' },
+  { name: 'Tucumán', coordinates: [-65.2167, -26.8167], description: 'El jardín de la República, cuna de la independencia argentina.', code: 'TUCUMAN' },
+  { name: 'Entre Ríos', coordinates: [-58.2333, -31.7333], description: 'Tierra de suaves colinas y ríos caudalosos.', code: 'ENTRERIOS' },
+  { name: 'Salta', coordinates: [-65.4167, -24.7833], description: 'La Linda, conocida por su rica arquitectura colonial y paisajes.', code: 'SALTA' },
+  { name: 'Misiones', coordinates: [-54.5167, -26.9167], description: 'Hogar de las Cataratas del Iguazú y selvas subtropicales.', code: 'MISIONES' },
+  { name: 'Chaco', coordinates: [-59.0333, -27.4500], description: 'Región de gran diversidad cultural y natural.', code: 'CHACO' },
+  { name: 'Santiago del Estero', coordinates: [-64.2667, -27.7833], description: 'La Madre de Ciudades, primera ciudad fundada en Argentina.', code: 'SANTIAGO' },
+  { name: 'San Juan', coordinates: [-68.5167, -31.5333], description: 'Tierra del sol y del buen vino.', code: 'SANJUAN' },
+  { name: 'Jujuy', coordinates: [-65.2997, -24.1858], description: 'Famosa por la Quebrada de Humahuaca y sus cerros multicolores.', code: 'JUJUY' },
+  { name: 'Río Negro', coordinates: [-67.0833, -40.8000], description: 'Destino turístico con hermosos lagos y montañas.', code: 'RIONEGRO' },
+  { name: 'Neuquén', coordinates: [-68.0591, -38.9516], description: 'Centro de deportes de invierno y paleontología.', code: 'NEUQUEN' },
+  { name: 'Formosa', coordinates: [-58.1781, -26.1775], description: 'Rica en biodiversidad y culturas originarias.', code: 'FORMOSA' },
+  { name: 'Chubut', coordinates: [-65.1026, -43.3002], description: 'Hogar de la ballena franca austral y pingüinos.', code: 'CHUBUT' },
+  { name: 'San Luis', coordinates: [-66.3356, -33.3022], description: 'Provincia de las sierras y los diques.', code: 'SANLUIS' },
+  { name: 'Corrientes', coordinates: [-58.8344, -27.4806], description: 'Tierra del Chamamé y los Esteros del Iberá.', code: 'CORRIENTES' },
+  { name: 'La Pampa', coordinates: [-64.2875, -36.6167], description: 'Corazón de la región pampeana argentina.', code: 'LAPAMPA' },
+  { name: 'Catamarca', coordinates: [-65.7859, -28.4696], description: 'Tierra de antiguos pueblos y paisajes lunares.', code: 'CATAMARCA' },
+  { name: 'La Rioja', coordinates: [-66.8511, -29.4131], description: 'Provincia de parques naturales y viñedos.', code: 'LARIOJA' },
+  { name: 'Santa Cruz', coordinates: [-69.2166, -48.8166], description: 'Hogar del Glaciar Perito Moreno.', code: 'SANTACRUZ' },
+  { name: 'Tierra del Fuego', coordinates: [-67.7000, -54.8000], description: 'El fin del mundo, punto más austral de Argentina.', code: 'TIERRADELFUEGO' }
 ];
 
-// URL actualizada del GeoJSON de provincias argentinas
-const argentinaProvincesGeoJSON = 'https://raw.githubusercontent.com/deldersveld/topojson/master/countries/argentina/argentina-provinces-v1.json';
+// Nueva URL base para los datos GeoJSON de provincias argentinas
+const baseGeoJSONUrl = 'https://raw.githubusercontent.com/alvarezgarcia/provincias-argentinas-geojson/refs/heads/master/';
 
 const Map = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [mapboxToken, setMapboxToken] = useState('');
-  const [provinceData, setProvinceData] = useState<any>(null);
+  const [provincesData, setProvincesData] = useState<Record<string, any>>({});
+  const [loadingStatus, setLoadingStatus] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Cargar los datos GeoJSON de las provincias
+  // Cargar los datos GeoJSON de las provincias individualmente
   useEffect(() => {
     const fetchProvinceData = async () => {
       try {
         setLoading(true);
         setError(null);
         
-        const response = await fetch(argentinaProvincesGeoJSON);
+        const provData: Record<string, any> = {};
+        const loadingTracker: Record<string, boolean> = {};
+        let errorCount = 0;
         
-        if (!response.ok) {
-          throw new Error(`Error al cargar datos: ${response.status} ${response.statusText}`);
+        // Cargar cada provincia por separado
+        const promises = provinces.map(async (province) => {
+          loadingTracker[province.code] = true;
+          
+          try {
+            const url = `${baseGeoJSONUrl}${province.code}.json`;
+            const response = await fetch(url);
+            
+            if (!response.ok) {
+              throw new Error(`Error al cargar ${province.name}: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            provData[province.code] = data;
+            loadingTracker[province.code] = false;
+            
+          } catch (provinceError) {
+            console.error(`Error cargando ${province.name}:`, provinceError);
+            errorCount++;
+            loadingTracker[province.code] = false;
+          }
+        });
+        
+        await Promise.allSettled(promises);
+        setProvincesData(provData);
+        setLoadingStatus(loadingTracker);
+        
+        if (errorCount === provinces.length) {
+          throw new Error("No se pudo cargar ninguna provincia");
+        } else if (errorCount > 0) {
+          toast.warning(`No se pudieron cargar ${errorCount} provincias`);
         }
         
-        const data = await response.json();
-        setProvinceData(data);
         setLoading(false);
       } catch (error) {
         console.error("Error al cargar los datos de provincias:", error);
@@ -74,14 +106,11 @@ const Map = () => {
   }, []);
 
   useEffect(() => {
-    if (!mapContainer.current || !mapboxToken) return;
+    if (!mapContainer.current || !mapboxToken || loading) return;
     
-    // Si aún estamos cargando o hay un error, no inicializar el mapa todavía
-    if (loading || error) return;
+    // Si hay un error y no hay datos, no inicializar el mapa
+    if (error && Object.keys(provincesData).length === 0) return;
     
-    // Si tenemos el token pero no los datos, no seguir
-    if (!provinceData) return;
-
     mapboxgl.accessToken = mapboxToken;
     
     map.current = new mapboxgl.Map({
@@ -96,122 +125,81 @@ const Map = () => {
 
     map.current.on('load', () => {
       try {
-        // Convertir el TopoJSON a GeoJSON
-        let features;
-        
-        if (provinceData.objects) {
-          // Es TopoJSON
-          const objectKey = Object.keys(provinceData.objects)[0]; // Obtener la primera clave de objects
-          features = window.topojson.feature(provinceData, provinceData.objects[objectKey]).features;
-        } else if (provinceData.features) {
-          // Ya es GeoJSON
-          features = provinceData.features;
-        } else {
-          throw new Error('Formato de datos no reconocido');
-        }
-
-        // Agregar la fuente con los datos de las provincias
-        map.current!.addSource('argentina-provinces', {
-          type: 'geojson',
-          data: {
-            type: 'FeatureCollection',
-            features: features
-          }
-        });
-
-        // Agregar la capa de provincias
-        map.current!.addLayer({
-          id: 'province-fills',
-          type: 'fill',
-          source: 'argentina-provinces',
-          layout: {},
-          paint: {
-            'fill-color': '#0080ff',
-            'fill-opacity': [
-              'case',
-              ['boolean', ['feature-state', 'hover'], false],
-              0.7,
-              0.5
-            ]
-          }
-        });
-
-        // Agregar el contorno de las provincias
-        map.current!.addLayer({
-          id: 'province-borders',
-          type: 'line',
-          source: 'argentina-provinces',
-          layout: {},
-          paint: {
-            'line-color': '#ffffff',
-            'line-width': 1
-          }
-        });
-
-        // Variables para rastrear el estado de hover
-        let hoveredProvinceId: string | number | null = null;
-
-        // Cambiar el cursor al pasar por encima de una provincia
-        map.current!.on('mousemove', 'province-fills', (e) => {
-          if (e.features && e.features.length > 0) {
-            if (hoveredProvinceId !== null) {
-              map.current!.setFeatureState(
-                { source: 'argentina-provinces', id: hoveredProvinceId },
-                { hover: false }
-              );
-            }
-            hoveredProvinceId = e.features[0].id;
-            map.current!.setFeatureState(
-              { source: 'argentina-provinces', id: hoveredProvinceId },
-              { hover: true }
-            );
-          }
-        });
-
-        // Restablecer el estado de hover cuando el mouse sale de la provincia
-        map.current!.on('mouseleave', 'province-fills', () => {
-          if (hoveredProvinceId !== null) {
-            map.current!.setFeatureState(
-              { source: 'argentina-provinces', id: hoveredProvinceId },
-              { hover: false }
-            );
-          }
-          hoveredProvinceId = null;
-        });
-
-        // Mostrar información al hacer clic en una provincia
-        map.current!.on('click', 'province-fills', (e) => {
-          if (!e.features || e.features.length === 0) return;
+        // Agregar cada provincia como una fuente y capa separada
+        Object.entries(provincesData).forEach(([code, data]) => {
+          const provinceInfo = provinces.find(p => p.code === code);
+          if (!provinceInfo) return;
           
-          const feature = e.features[0];
-          const provinceName = feature.properties?.name || feature.properties?.provincia || 
-                              feature.properties?.NAME_1 || feature.properties?.name_1;
+          const sourceId = `province-${code}`;
+          const fillLayerId = `province-fill-${code}`;
+          const borderLayerId = `province-border-${code}`;
           
-          // Buscar la información adicional de la provincia
-          const provinceInfo = provinces.find(p => {
-            if (!provinceName) return false;
-            return p.name === provinceName || 
-                   p.name.includes(provinceName) || 
-                   provinceName.includes(p.name);
+          // Añadir fuente
+          map.current!.addSource(sourceId, {
+            type: 'geojson',
+            data: data as any
           });
           
-          const description = provinceInfo ? provinceInfo.description : 'Provincia de Argentina';
+          // Añadir capa de relleno
+          map.current!.addLayer({
+            id: fillLayerId,
+            type: 'fill',
+            source: sourceId,
+            layout: {},
+            paint: {
+              'fill-color': '#0080ff',
+              'fill-opacity': [
+                'case',
+                ['boolean', ['feature-state', 'hover'], false],
+                0.7,
+                0.5
+              ]
+            }
+          });
           
-          // Crear y mostrar el popup
-          new mapboxgl.Popup()
-            .setLngLat(e.lngLat)
-            .setHTML(`<h3 class="font-bold text-lg">${provinceName || 'Provincia'}</h3>
-                      <p class="text-sm mt-1">${description}</p>`)
-            .addTo(map.current!);
+          // Añadir capa de borde
+          map.current!.addLayer({
+            id: borderLayerId,
+            type: 'line',
+            source: sourceId,
+            layout: {},
+            paint: {
+              'line-color': '#ffffff',
+              'line-width': 1
+            }
+          });
+          
+          // Eventos para cambiar el cursor y el hover
+          map.current!.on('mouseenter', fillLayerId, () => {
+            if (map.current) {
+              map.current.getCanvas().style.cursor = 'pointer';
+            }
+          });
+          
+          map.current!.on('mouseleave', fillLayerId, () => {
+            if (map.current) {
+              map.current.getCanvas().style.cursor = '';
+            }
+          });
+          
+          // Evento de clic para mostrar información
+          map.current!.on('click', fillLayerId, () => {
+            new mapboxgl.Popup()
+              .setLngLat(provinceInfo.coordinates)
+              .setHTML(`<h3 class="font-bold text-lg">${provinceInfo.name}</h3>
+                        <p class="text-sm mt-1">${provinceInfo.description}</p>`)
+              .addTo(map.current!);
+          });
         });
+        
       } catch (mapError) {
         console.error("Error al configurar el mapa:", mapError);
-        setError(`Error al configurar el mapa: ${mapError instanceof Error ? mapError.message : 'Error desconocido'}`);
+        toast.error(`Error al configurar el mapa: ${mapError instanceof Error ? mapError.message : 'Error desconocido'}`);
       }
     });
 
     return () => map.current?.remove();
-  }, [mapboxToken, provinceData, loading, error]);
+  }, [mapboxToken, provincesData, loading, error]);
 
   return (
     <div className="flex flex-col items-center gap-4 w-full max-w-6xl mx-auto p-4">
@@ -238,16 +226,16 @@ const Map = () => {
           </div>
         )}
         
-        {error && (
+        {error && Object.keys(provincesData).length === 0 && (
           <div className="flex flex-col items-center justify-center h-full bg-gray-100 p-4">
             <p className="text-red-500 text-center mb-2">{error}</p>
             <p className="text-sm text-gray-600 text-center">
-              Verifica tu conexión a Internet o intenta con una URL alternativa.
+              Verifica tu conexión a Internet o utiliza una URL alternativa.
             </p>
           </div>
         )}
         
-        <div ref={mapContainer} className={`w-full h-full ${loading || error ? 'hidden' : ''}`} />
+        <div ref={mapContainer} className={`w-full h-full ${loading || (error && Object.keys(provincesData).length === 0) ? 'hidden' : ''}`} />
       </div>
       
       <p className="text-sm text-gray-600 text-center">

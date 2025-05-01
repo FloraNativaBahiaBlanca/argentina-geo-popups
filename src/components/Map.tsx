@@ -9,6 +9,7 @@ interface Province {
   description: string;
 }
 
+// Mantenemos el array de provincias para la información de cada una
 const provinces: Province[] = [
   { name: 'Buenos Aires', coordinates: [-60.0000, -36.0000], description: 'La provincia más poblada de Argentina, sede de importantes centros urbanos e industriales.' },
   { name: 'Córdoba', coordinates: [-64.1833, -31.4167], description: 'Centro cultural y educativo, conocida por sus sierras y universidades.' },
@@ -35,13 +36,32 @@ const provinces: Province[] = [
   { name: 'Tierra del Fuego', coordinates: [-67.7000, -54.8000], description: 'El fin del mundo, punto más austral de Argentina.' }
 ];
 
+// URL del GeoJSON de provincias argentinas
+const argentinaProvincesGeoJSON = 'https://raw.githubusercontent.com/deldersveld/topojson/master/countries/argentina/argentina-provinces.json';
+
 const Map = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [mapboxToken, setMapboxToken] = useState('');
+  const [provinceData, setProvinceData] = useState<any>(null);
+
+  // Cargar los datos GeoJSON de las provincias
+  useEffect(() => {
+    const fetchProvinceData = async () => {
+      try {
+        const response = await fetch(argentinaProvincesGeoJSON);
+        const data = await response.json();
+        setProvinceData(data);
+      } catch (error) {
+        console.error("Error al cargar los datos de provincias:", error);
+      }
+    };
+
+    fetchProvinceData();
+  }, []);
 
   useEffect(() => {
-    if (!mapContainer.current || !mapboxToken) return;
+    if (!mapContainer.current || !mapboxToken || !provinceData) return;
 
     mapboxgl.accessToken = mapboxToken;
     
@@ -55,22 +75,106 @@ const Map = () => {
     // Agregar controles de navegación
     map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
-    // Agregar marcadores y popups para cada provincia
-    provinces.forEach(province => {
-      const popup = new mapboxgl.Popup({ offset: 25 })
-        .setHTML(`<h3 class="font-bold text-lg">${province.name}</h3>
-                  <p class="text-sm mt-1">${province.description}</p>`);
+    map.current.on('load', () => {
+      // Convertir el TopoJSON a GeoJSON si es necesario
+      const features = provinceData.objects ? 
+        // Si es TopoJSON
+        window.topojson.feature(provinceData, provinceData.objects.provincias || provinceData.objects.provinces).features :
+        // Si ya es GeoJSON
+        provinceData.features;
 
-      new mapboxgl.Marker({
-        color: "#1EAEDB"
-      })
-        .setLngLat(province.coordinates)
-        .setPopup(popup)
-        .addTo(map.current!);
+      // Agregar la fuente con los datos de las provincias
+      map.current!.addSource('argentina-provinces', {
+        type: 'geojson',
+        data: {
+          type: 'FeatureCollection',
+          features: features
+        }
+      });
+
+      // Agregar la capa de provincias
+      map.current!.addLayer({
+        id: 'province-fills',
+        type: 'fill',
+        source: 'argentina-provinces',
+        layout: {},
+        paint: {
+          'fill-color': '#0080ff',
+          'fill-opacity': [
+            'case',
+            ['boolean', ['feature-state', 'hover'], false],
+            0.7,
+            0.5
+          ]
+        }
+      });
+
+      // Agregar el contorno de las provincias
+      map.current!.addLayer({
+        id: 'province-borders',
+        type: 'line',
+        source: 'argentina-provinces',
+        layout: {},
+        paint: {
+          'line-color': '#ffffff',
+          'line-width': 1
+        }
+      });
+
+      // Variables para rastrear el estado de hover
+      let hoveredProvinceId: string | number | null = null;
+
+      // Cambiar el cursor al pasar por encima de una provincia
+      map.current!.on('mousemove', 'province-fills', (e) => {
+        if (e.features && e.features.length > 0) {
+          if (hoveredProvinceId !== null) {
+            map.current!.setFeatureState(
+              { source: 'argentina-provinces', id: hoveredProvinceId },
+              { hover: false }
+            );
+          }
+          hoveredProvinceId = e.features[0].id;
+          map.current!.setFeatureState(
+            { source: 'argentina-provinces', id: hoveredProvinceId },
+            { hover: true }
+          );
+        }
+      });
+
+      // Restablecer el estado de hover cuando el mouse sale de la provincia
+      map.current!.on('mouseleave', 'province-fills', () => {
+        if (hoveredProvinceId !== null) {
+          map.current!.setFeatureState(
+            { source: 'argentina-provinces', id: hoveredProvinceId },
+            { hover: false }
+          );
+        }
+        hoveredProvinceId = null;
+      });
+
+      // Mostrar información al hacer clic en una provincia
+      map.current!.on('click', 'province-fills', (e) => {
+        if (!e.features || e.features.length === 0) return;
+        
+        const feature = e.features[0];
+        const provinceName = feature.properties.name || feature.properties.provincia || feature.properties.NAME_1;
+        
+        // Buscar la información adicional de la provincia
+        const provinceInfo = provinces.find(p => p.name === provinceName || p.name.includes(provinceName) || provinceName.includes(p.name));
+        
+        const description = provinceInfo ? provinceInfo.description : 'Provincia de Argentina';
+        
+        // Crear y mostrar el popup
+        new mapboxgl.Popup()
+          .setLngLat(e.lngLat)
+          .setHTML(`<h3 class="font-bold text-lg">${provinceName}</h3>
+                    <p class="text-sm mt-1">${description}</p>`)
+          .addTo(map.current!);
+      });
     });
 
     return () => map.current?.remove();
-  }, [mapboxToken]);
+  }, [mapboxToken, provinceData]);
 
   return (
     <div className="flex flex-col items-center gap-4 w-full max-w-6xl mx-auto p-4">
@@ -92,7 +196,7 @@ const Map = () => {
         <div ref={mapContainer} className="w-full h-full" />
       </div>
       <p className="text-sm text-gray-600 text-center">
-        Haz clic en los marcadores para ver información sobre cada provincia
+        Haz clic en las provincias para ver información sobre cada una
       </p>
     </div>
   );

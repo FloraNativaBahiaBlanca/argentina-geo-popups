@@ -207,6 +207,7 @@ const Map = () => {
               viewBox={viewBox}
               className="w-full h-full"
               preserveAspectRatio="xMidYMid meet"
+              style={{ transform: "scale(1, -1)" }} /* Aplicar reflejo vertical */
             >
               {Object.entries(paths).map(([code, pathData]) => {
                 const province = provinces.find(p => p.code === code);

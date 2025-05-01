@@ -36,24 +36,37 @@ const provinces: Province[] = [
   { name: 'Tierra del Fuego', coordinates: [-67.7000, -54.8000], description: 'El fin del mundo, punto más austral de Argentina.' }
 ];
 
-// URL del GeoJSON de provincias argentinas
-const argentinaProvincesGeoJSON = 'https://raw.githubusercontent.com/deldersveld/topojson/master/countries/argentina/argentina-provinces.json';
+// URL actualizada del GeoJSON de provincias argentinas
+const argentinaProvincesGeoJSON = 'https://raw.githubusercontent.com/deldersveld/topojson/master/countries/argentina/argentina-provinces-v1.json';
 
 const Map = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [mapboxToken, setMapboxToken] = useState('');
   const [provinceData, setProvinceData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Cargar los datos GeoJSON de las provincias
   useEffect(() => {
     const fetchProvinceData = async () => {
       try {
+        setLoading(true);
+        setError(null);
+        
         const response = await fetch(argentinaProvincesGeoJSON);
+        
+        if (!response.ok) {
+          throw new Error(`Error al cargar datos: ${response.status} ${response.statusText}`);
+        }
+        
         const data = await response.json();
         setProvinceData(data);
+        setLoading(false);
       } catch (error) {
         console.error("Error al cargar los datos de provincias:", error);
+        setError(`No se pudieron cargar las provincias. ${error instanceof Error ? error.message : 'Error desconocido'}`);
+        setLoading(false);
       }
     };
 
@@ -61,7 +74,13 @@ const Map = () => {
   }, []);
 
   useEffect(() => {
-    if (!mapContainer.current || !mapboxToken || !provinceData) return;
+    if (!mapContainer.current || !mapboxToken) return;
+    
+    // Si aún estamos cargando o hay un error, no inicializar el mapa todavía
+    if (loading || error) return;
+    
+    // Si tenemos el token pero no los datos, no seguir
+    if (!provinceData) return;
 
     mapboxgl.accessToken = mapboxToken;
     
@@ -76,109 +95,128 @@ const Map = () => {
     map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
     map.current.on('load', () => {
-      // Convertir el TopoJSON a GeoJSON si es necesario
-      const features = provinceData.objects ? 
-        // Si es TopoJSON
-        window.topojson.feature(provinceData, provinceData.objects.provincias || provinceData.objects.provinces).features :
-        // Si ya es GeoJSON
-        provinceData.features;
-
-      // Agregar la fuente con los datos de las provincias
-      map.current!.addSource('argentina-provinces', {
-        type: 'geojson',
-        data: {
-          type: 'FeatureCollection',
-          features: features
+      try {
+        // Convertir el TopoJSON a GeoJSON
+        let features;
+        
+        if (provinceData.objects) {
+          // Es TopoJSON
+          const objectKey = Object.keys(provinceData.objects)[0]; // Obtener la primera clave de objects
+          features = window.topojson.feature(provinceData, provinceData.objects[objectKey]).features;
+        } else if (provinceData.features) {
+          // Ya es GeoJSON
+          features = provinceData.features;
+        } else {
+          throw new Error('Formato de datos no reconocido');
         }
-      });
 
-      // Agregar la capa de provincias
-      map.current!.addLayer({
-        id: 'province-fills',
-        type: 'fill',
-        source: 'argentina-provinces',
-        layout: {},
-        paint: {
-          'fill-color': '#0080ff',
-          'fill-opacity': [
-            'case',
-            ['boolean', ['feature-state', 'hover'], false],
-            0.7,
-            0.5
-          ]
-        }
-      });
+        // Agregar la fuente con los datos de las provincias
+        map.current!.addSource('argentina-provinces', {
+          type: 'geojson',
+          data: {
+            type: 'FeatureCollection',
+            features: features
+          }
+        });
 
-      // Agregar el contorno de las provincias
-      map.current!.addLayer({
-        id: 'province-borders',
-        type: 'line',
-        source: 'argentina-provinces',
-        layout: {},
-        paint: {
-          'line-color': '#ffffff',
-          'line-width': 1
-        }
-      });
+        // Agregar la capa de provincias
+        map.current!.addLayer({
+          id: 'province-fills',
+          type: 'fill',
+          source: 'argentina-provinces',
+          layout: {},
+          paint: {
+            'fill-color': '#0080ff',
+            'fill-opacity': [
+              'case',
+              ['boolean', ['feature-state', 'hover'], false],
+              0.7,
+              0.5
+            ]
+          }
+        });
 
-      // Variables para rastrear el estado de hover
-      let hoveredProvinceId: string | number | null = null;
+        // Agregar el contorno de las provincias
+        map.current!.addLayer({
+          id: 'province-borders',
+          type: 'line',
+          source: 'argentina-provinces',
+          layout: {},
+          paint: {
+            'line-color': '#ffffff',
+            'line-width': 1
+          }
+        });
 
-      // Cambiar el cursor al pasar por encima de una provincia
-      map.current!.on('mousemove', 'province-fills', (e) => {
-        if (e.features && e.features.length > 0) {
+        // Variables para rastrear el estado de hover
+        let hoveredProvinceId: string | number | null = null;
+
+        // Cambiar el cursor al pasar por encima de una provincia
+        map.current!.on('mousemove', 'province-fills', (e) => {
+          if (e.features && e.features.length > 0) {
+            if (hoveredProvinceId !== null) {
+              map.current!.setFeatureState(
+                { source: 'argentina-provinces', id: hoveredProvinceId },
+                { hover: false }
+              );
+            }
+            hoveredProvinceId = e.features[0].id;
+            map.current!.setFeatureState(
+              { source: 'argentina-provinces', id: hoveredProvinceId },
+              { hover: true }
+            );
+          }
+        });
+
+        // Restablecer el estado de hover cuando el mouse sale de la provincia
+        map.current!.on('mouseleave', 'province-fills', () => {
           if (hoveredProvinceId !== null) {
             map.current!.setFeatureState(
               { source: 'argentina-provinces', id: hoveredProvinceId },
               { hover: false }
             );
           }
-          hoveredProvinceId = e.features[0].id;
-          map.current!.setFeatureState(
-            { source: 'argentina-provinces', id: hoveredProvinceId },
-            { hover: true }
-          );
-        }
-      });
+          hoveredProvinceId = null;
+        });
 
-      // Restablecer el estado de hover cuando el mouse sale de la provincia
-      map.current!.on('mouseleave', 'province-fills', () => {
-        if (hoveredProvinceId !== null) {
-          map.current!.setFeatureState(
-            { source: 'argentina-provinces', id: hoveredProvinceId },
-            { hover: false }
-          );
-        }
-        hoveredProvinceId = null;
-      });
-
-      // Mostrar información al hacer clic en una provincia
-      map.current!.on('click', 'province-fills', (e) => {
-        if (!e.features || e.features.length === 0) return;
-        
-        const feature = e.features[0];
-        const provinceName = feature.properties.name || feature.properties.provincia || feature.properties.NAME_1;
-        
-        // Buscar la información adicional de la provincia
-        const provinceInfo = provinces.find(p => p.name === provinceName || p.name.includes(provinceName) || provinceName.includes(p.name));
-        
-        const description = provinceInfo ? provinceInfo.description : 'Provincia de Argentina';
-        
-        // Crear y mostrar el popup
-        new mapboxgl.Popup()
-          .setLngLat(e.lngLat)
-          .setHTML(`<h3 class="font-bold text-lg">${provinceName}</h3>
-                    <p class="text-sm mt-1">${description}</p>`)
-          .addTo(map.current!);
-      });
+        // Mostrar información al hacer clic en una provincia
+        map.current!.on('click', 'province-fills', (e) => {
+          if (!e.features || e.features.length === 0) return;
+          
+          const feature = e.features[0];
+          const provinceName = feature.properties?.name || feature.properties?.provincia || 
+                              feature.properties?.NAME_1 || feature.properties?.name_1;
+          
+          // Buscar la información adicional de la provincia
+          const provinceInfo = provinces.find(p => {
+            if (!provinceName) return false;
+            return p.name === provinceName || 
+                   p.name.includes(provinceName) || 
+                   provinceName.includes(p.name);
+          });
+          
+          const description = provinceInfo ? provinceInfo.description : 'Provincia de Argentina';
+          
+          // Crear y mostrar el popup
+          new mapboxgl.Popup()
+            .setLngLat(e.lngLat)
+            .setHTML(`<h3 class="font-bold text-lg">${provinceName || 'Provincia'}</h3>
+                      <p class="text-sm mt-1">${description}</p>`)
+            .addTo(map.current!);
+        });
+      } catch (mapError) {
+        console.error("Error al configurar el mapa:", mapError);
+        setError(`Error al configurar el mapa: ${mapError instanceof Error ? mapError.message : 'Error desconocido'}`);
+      }
     });
 
     return () => map.current?.remove();
-  }, [mapboxToken, provinceData]);
+  }, [mapboxToken, provinceData, loading, error]);
 
   return (
     <div className="flex flex-col items-center gap-4 w-full max-w-6xl mx-auto p-4">
       <h1 className="text-3xl font-bold text-center mb-2">Mapa Interactivo de Argentina</h1>
+      
       {!mapboxToken && (
         <div className="w-full max-w-md">
           <input
@@ -192,9 +230,26 @@ const Map = () => {
           </p>
         </div>
       )}
+      
       <div className="w-full h-[600px] rounded-lg overflow-hidden border shadow-lg">
-        <div ref={mapContainer} className="w-full h-full" />
+        {loading && (
+          <div className="flex items-center justify-center h-full bg-gray-100">
+            <p className="text-gray-600">Cargando datos del mapa...</p>
+          </div>
+        )}
+        
+        {error && (
+          <div className="flex flex-col items-center justify-center h-full bg-gray-100 p-4">
+            <p className="text-red-500 text-center mb-2">{error}</p>
+            <p className="text-sm text-gray-600 text-center">
+              Verifica tu conexión a Internet o intenta con una URL alternativa.
+            </p>
+          </div>
+        )}
+        
+        <div ref={mapContainer} className={`w-full h-full ${loading || error ? 'hidden' : ''}`} />
       </div>
+      
       <p className="text-sm text-gray-600 text-center">
         Haz clic en las provincias para ver información sobre cada una
       </p>

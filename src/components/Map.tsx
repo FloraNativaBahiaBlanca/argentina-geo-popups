@@ -1,16 +1,16 @@
 import { useEffect, useState } from 'react';
 import { toast } from '@/components/ui/sonner';
 import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
-import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface Province {
   name: string;
@@ -58,71 +58,66 @@ const Map = () => {
   const [hoveredProvince, setHoveredProvince] = useState<string | null>(null);
   const [loadedProvinces, setLoadedProvinces] = useState<string[]>([]);
   const [failedProvinces, setFailedProvinces] = useState<string[]>([]);
-  const [clickPosition, setClickPosition] = useState<{ x: number, y: number } | null>(null);
-
+  
   // Cargar los datos GeoJSON de las provincias
-  useEffect(() => {
-    const fetchProvinceData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        setLoadedProvinces([]);
-        setFailedProvinces([]);
-        
-        const provData: Record<string, any> = {};
-        let errorCount = 0;
-        const loaded: string[] = [];
-        const failed: string[] = [];
-        
-        // Cargar cada provincia por separado
-        const promises = provinces.map(async (province) => {
-          try {
-            const url = `${baseGeoJSONUrl}${province.code}.json`;
-            console.log(`Intentando cargar: ${province.name} desde ${url}`);
-            
-            const response = await fetch(url);
-            
-            if (!response.ok) {
-              throw new Error(`Error al cargar ${province.name}: ${response.status}`);
-            }
-            
-            const data = await response.json();
-            provData[province.code] = data;
-            loaded.push(province.code);
-            console.log(`Provincia cargada con éxito: ${province.name}`);
-            
-          } catch (provinceError) {
-            console.error(`Error cargando ${province.name}:`, provinceError);
-            errorCount++;
-            failed.push(province.code);
+  const fetchProvinceData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      setLoadedProvinces([]);
+      setFailedProvinces([]);
+      
+      const provData: Record<string, any> = {};
+      let errorCount = 0;
+      const loaded: string[] = [];
+      const failed: string[] = [];
+      
+      // Cargar cada provincia por separado
+      const promises = provinces.map(async (province) => {
+        try {
+          const url = `${baseGeoJSONUrl}${province.code}.json`;
+          console.log(`Intentando cargar: ${province.name} desde ${url}`);
+          
+          const response = await fetch(url);
+          
+          if (!response.ok) {
+            throw new Error(`Error al cargar ${province.name}: ${response.status}`);
           }
-        });
-        
-        await Promise.allSettled(promises);
-        setProvincesData(provData);
-        setLoadedProvinces(loaded);
-        setFailedProvinces(failed);
-        
-        if (errorCount === provinces.length) {
-          throw new Error("No se pudo cargar ninguna provincia");
-        } else if (errorCount > 0) {
-          const failedNames = provinces
-            .filter(p => failed.includes(p.code))
-            .map(p => p.name)
-            .join(", ");
-          toast.warning(`No se pudieron cargar ${errorCount} provincias: ${failedNames}`);
+          
+          const data = await response.json();
+          provData[province.code] = data;
+          loaded.push(province.code);
+          console.log(`Provincia cargada con éxito: ${province.name}`);
+          
+        } catch (provinceError) {
+          console.error(`Error cargando ${province.name}:`, provinceError);
+          errorCount++;
+          failed.push(province.code);
         }
-        
-        setLoading(false);
-      } catch (error) {
-        console.error("Error al cargar los datos de provincias:", error);
-        setError(`No se pudieron cargar las provincias. ${error instanceof Error ? error.message : 'Error desconocido'}`);
-        setLoading(false);
+      });
+      
+      await Promise.allSettled(promises);
+      setProvincesData(provData);
+      setLoadedProvinces(loaded);
+      setFailedProvinces(failed);
+      
+      if (errorCount === provinces.length) {
+        throw new Error("No se pudo cargar ninguna provincia");
+      } else if (errorCount > 0) {
+        const failedNames = provinces
+          .filter(p => failed.includes(p.code))
+          .map(p => p.name)
+          .join(", ");
+        toast.warning(`No se pudieron cargar ${errorCount} provincias: ${failedNames}`);
       }
-    };
-
-    fetchProvinceData();
-  }, []);
+      
+      setLoading(false);
+    } catch (error) {
+      console.error("Error al cargar los datos de provincias:", error);
+      setError(`No se pudieron cargar las provincias. ${error instanceof Error ? error.message : 'Error desconocido'}`);
+      setLoading(false);
+    }
+  };
 
   // Procesar los datos GeoJSON para generar los paths de SVG
   useEffect(() => {
@@ -203,26 +198,9 @@ const Map = () => {
   }, [provincesData, failedProvinces]);
 
   // Función para manejar el clic en una provincia
-  const handleProvinceClick = (code: string, event: React.MouseEvent) => {
-    const province = provinces.find(p => p.code === code);
-    if (province) {
-      // Toggle selected province if clicking the same one
-      if (selectedProvince === code) {
-        setSelectedProvince(null);
-      } else {
-        setSelectedProvince(code);
-        // Capture click position for the tooltip
-        const rect = event.currentTarget.getBoundingClientRect();
-        const x = event.clientX - rect.left;
-        const y = event.clientY - rect.top;
-        setClickPosition({ x, y });
-      }
-    }
-  };
-
-  // Función para cerrar el popup
-  const closePopup = () => {
-    setSelectedProvince(null);
+  const handleProvinceClick = (code: string) => {
+    console.log("Provincia clickeada:", code);
+    setSelectedProvince(selectedProvince === code ? null : code);
   };
 
   // Función para intentar volver a cargar las provincias fallidas
@@ -296,40 +274,40 @@ const Map = () => {
                 viewBox={viewBox}
                 className="w-full h-full"
                 preserveAspectRatio="xMidYMid meet"
-                style={{ transform: "scale(1, -1)" }} /* Aplicar reflejo vertical */
+                style={{ transform: "scale(1, -1)" }} 
               >
                 {Object.entries(paths).map(([code, pathData]) => {
                   const province = provinces.find(p => p.code === code);
                   return (
-                    <Tooltip key={code}>
-                      <TooltipTrigger asChild>
+                    <Popover key={code} open={selectedProvince === code} onOpenChange={(open) => {
+                      if (!open) setSelectedProvince(null);
+                    }}>
+                      <PopoverTrigger asChild>
                         <path
                           d={pathData}
                           fill={hoveredProvince === code || selectedProvince === code ? "#0066cc" : "#0080ff"}
                           stroke="#ffffff"
                           strokeWidth="0.1"
                           className="transition-colors duration-200"
-                          onClick={(e) => handleProvinceClick(code, e)}
+                          onClick={() => handleProvinceClick(code)}
                           onMouseEnter={() => setHoveredProvince(code)}
                           onMouseLeave={() => setHoveredProvince(null)}
                           style={{ cursor: 'pointer' }}
                         />
-                      </TooltipTrigger>
-                      {selectedProvince === code && (
-                        <TooltipContent 
-                          side="top" 
-                          className="bg-white p-4 rounded-lg shadow-lg max-w-xs border z-50"
-                          sideOffset={5}
-                        >
-                          <h3 className="font-bold text-lg">
-                            {province?.name}
-                          </h3>
-                          <p className="text-sm mt-1">
-                            {province?.description}
-                          </p>
-                        </TooltipContent>
-                      )}
-                    </Tooltip>
+                      </PopoverTrigger>
+                      <PopoverContent 
+                        className="bg-white p-3 rounded-lg shadow-lg max-w-xs border z-50"
+                        side="top"
+                        sideOffset={5}
+                      >
+                        <h3 className="font-bold text-lg">
+                          {province?.name}
+                        </h3>
+                        <p className="text-sm mt-1">
+                          {province?.description}
+                        </p>
+                      </PopoverContent>
+                    </Popover>
                   );
                 })}
               </svg>

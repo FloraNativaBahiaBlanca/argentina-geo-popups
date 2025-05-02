@@ -1,6 +1,16 @@
-
 import { useEffect, useState } from 'react';
 import { toast } from '@/components/ui/sonner';
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface Province {
   name: string;
@@ -48,6 +58,7 @@ const Map = () => {
   const [hoveredProvince, setHoveredProvince] = useState<string | null>(null);
   const [loadedProvinces, setLoadedProvinces] = useState<string[]>([]);
   const [failedProvinces, setFailedProvinces] = useState<string[]>([]);
+  const [clickPosition, setClickPosition] = useState<{ x: number, y: number } | null>(null);
 
   // Cargar los datos GeoJSON de las provincias
   useEffect(() => {
@@ -192,10 +203,20 @@ const Map = () => {
   }, [provincesData, failedProvinces]);
 
   // Función para manejar el clic en una provincia
-  const handleProvinceClick = (code: string) => {
+  const handleProvinceClick = (code: string, event: React.MouseEvent) => {
     const province = provinces.find(p => p.code === code);
     if (province) {
-      setSelectedProvince(code);
+      // Toggle selected province if clicking the same one
+      if (selectedProvince === code) {
+        setSelectedProvince(null);
+      } else {
+        setSelectedProvince(code);
+        // Capture click position for the tooltip
+        const rect = event.currentTarget.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        setClickPosition({ x, y });
+      }
     }
   };
 
@@ -270,47 +291,49 @@ const Map = () => {
         
         {!loading && Object.keys(paths).length > 0 && (
           <div className="relative w-full h-full">
-            <svg
-              viewBox={viewBox}
-              className="w-full h-full"
-              preserveAspectRatio="xMidYMid meet"
-              style={{ transform: "scale(1, -1)" }} /* Aplicar reflejo vertical */
-            >
-              {Object.entries(paths).map(([code, pathData]) => {
-                const province = provinces.find(p => p.code === code);
-                return (
-                  <path
-                    key={code}
-                    d={pathData}
-                    fill={hoveredProvince === code || selectedProvince === code ? "#0066cc" : "#0080ff"}
-                    stroke="#ffffff"
-                    strokeWidth="0.1"
-                    className="transition-colors duration-200"
-                    onClick={() => handleProvinceClick(code)}
-                    onMouseEnter={() => setHoveredProvince(code)}
-                    onMouseLeave={() => setHoveredProvince(null)}
-                    style={{ cursor: 'pointer' }}
-                  />
-                );
-              })}
-            </svg>
-            
-            {selectedProvince && (
-              <div className="absolute top-0 left-0 m-4 bg-white p-4 rounded-lg shadow-lg max-w-xs">
-                <button 
-                  onClick={closePopup}
-                  className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
-                >
-                  ✕
-                </button>
-                <h3 className="font-bold text-lg">
-                  {provinces.find(p => p.code === selectedProvince)?.name}
-                </h3>
-                <p className="text-sm mt-1">
-                  {provinces.find(p => p.code === selectedProvince)?.description}
-                </p>
-              </div>
-            )}
+            <TooltipProvider>
+              <svg
+                viewBox={viewBox}
+                className="w-full h-full"
+                preserveAspectRatio="xMidYMid meet"
+                style={{ transform: "scale(1, -1)" }} /* Aplicar reflejo vertical */
+              >
+                {Object.entries(paths).map(([code, pathData]) => {
+                  const province = provinces.find(p => p.code === code);
+                  return (
+                    <Tooltip key={code}>
+                      <TooltipTrigger asChild>
+                        <path
+                          d={pathData}
+                          fill={hoveredProvince === code || selectedProvince === code ? "#0066cc" : "#0080ff"}
+                          stroke="#ffffff"
+                          strokeWidth="0.1"
+                          className="transition-colors duration-200"
+                          onClick={(e) => handleProvinceClick(code, e)}
+                          onMouseEnter={() => setHoveredProvince(code)}
+                          onMouseLeave={() => setHoveredProvince(null)}
+                          style={{ cursor: 'pointer' }}
+                        />
+                      </TooltipTrigger>
+                      {selectedProvince === code && (
+                        <TooltipContent 
+                          side="top" 
+                          className="bg-white p-4 rounded-lg shadow-lg max-w-xs border z-50"
+                          sideOffset={5}
+                        >
+                          <h3 className="font-bold text-lg">
+                            {province?.name}
+                          </h3>
+                          <p className="text-sm mt-1">
+                            {province?.description}
+                          </p>
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  );
+                })}
+              </svg>
+            </TooltipProvider>
           </div>
         )}
         

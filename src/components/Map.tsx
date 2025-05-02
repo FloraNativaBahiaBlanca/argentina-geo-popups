@@ -19,7 +19,7 @@ const provinces: Province[] = [
   { name: 'Salta', description: 'La Linda, conocida por su rica arquitectura colonial y paisajes.', code: 'SALTA' },
   { name: 'Misiones', description: 'Hogar de las Cataratas del Iguazú y selvas subtropicales.', code: 'MISIONES' },
   { name: 'Chaco', description: 'Región de gran diversidad cultural y natural.', code: 'CHACO' },
-  { name: 'Santiago del Estero', description: 'La Madre de Ciudades, primera ciudad fundada en Argentina.', code: 'SANTIAGO' },
+  { name: 'Santiago del Estero', description: 'La Madre de Ciudades, primera ciudad fundada en Argentina.', code: 'SANTIAGODELESTERO' },
   { name: 'San Juan', description: 'Tierra del sol y del buen vino.', code: 'SANJUAN' },
   { name: 'Jujuy', description: 'Famosa por la Quebrada de Humahuaca y sus cerros multicolores.', code: 'JUJUY' },
   { name: 'Río Negro', description: 'Destino turístico con hermosos lagos y montañas.', code: 'RIONEGRO' },

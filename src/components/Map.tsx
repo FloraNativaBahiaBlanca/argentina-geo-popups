@@ -46,6 +46,8 @@ const Map = () => {
   const [viewBox, setViewBox] = useState<string>("0 0 800 800");
   const [paths, setPaths] = useState<{ [key: string]: string }>({});
   const [hoveredProvince, setHoveredProvince] = useState<string | null>(null);
+  const [loadedProvinces, setLoadedProvinces] = useState<string[]>([]);
+  const [failedProvinces, setFailedProvinces] = useState<string[]>([]);
 
   // Cargar los datos GeoJSON de las provincias
   useEffect(() => {
@@ -53,14 +55,20 @@ const Map = () => {
       try {
         setLoading(true);
         setError(null);
+        setLoadedProvinces([]);
+        setFailedProvinces([]);
         
         const provData: Record<string, any> = {};
         let errorCount = 0;
+        const loaded: string[] = [];
+        const failed: string[] = [];
         
         // Cargar cada provincia por separado
         const promises = provinces.map(async (province) => {
           try {
             const url = `${baseGeoJSONUrl}${province.code}.json`;
+            console.log(`Intentando cargar: ${province.name} desde ${url}`);
+            
             const response = await fetch(url);
             
             if (!response.ok) {
@@ -69,20 +77,29 @@ const Map = () => {
             
             const data = await response.json();
             provData[province.code] = data;
+            loaded.push(province.code);
+            console.log(`Provincia cargada con éxito: ${province.name}`);
             
           } catch (provinceError) {
             console.error(`Error cargando ${province.name}:`, provinceError);
             errorCount++;
+            failed.push(province.code);
           }
         });
         
         await Promise.allSettled(promises);
         setProvincesData(provData);
+        setLoadedProvinces(loaded);
+        setFailedProvinces(failed);
         
         if (errorCount === provinces.length) {
           throw new Error("No se pudo cargar ninguna provincia");
         } else if (errorCount > 0) {
-          toast.warning(`No se pudieron cargar ${errorCount} provincias`);
+          const failedNames = provinces
+            .filter(p => failed.includes(p.code))
+            .map(p => p.name)
+            .join(", ");
+          toast.warning(`No se pudieron cargar ${errorCount} provincias: ${failedNames}`);
         }
         
         setLoading(false);
@@ -162,11 +179,17 @@ const Map = () => {
       setViewBox(`${minX - width * margin} ${minY - height * margin} ${width * (1 + 2 * margin)} ${height * (1 + 2 * margin)}`);
       
       setPaths(svgPaths);
+      
+      // Verificar si Córdoba está cargada
+      if (!svgPaths['CORDOBA'] && !failedProvinces.includes('CORDOBA')) {
+        console.warn("Córdoba no se cargó correctamente en el mapa");
+        toast.error("No se pudo cargar la provincia de Córdoba");
+      }
     } catch (error) {
       console.error("Error al procesar los datos GeoJSON:", error);
       toast.error("Error al procesar los datos del mapa");
     }
-  }, [provincesData]);
+  }, [provincesData, failedProvinces]);
 
   // Función para manejar el clic en una provincia
   const handleProvinceClick = (code: string) => {
@@ -179,6 +202,50 @@ const Map = () => {
   // Función para cerrar el popup
   const closePopup = () => {
     setSelectedProvince(null);
+  };
+
+  // Función para intentar volver a cargar las provincias fallidas
+  const retryFailedProvinces = async () => {
+    if (failedProvinces.length === 0) return;
+    
+    try {
+      setLoading(true);
+      const newProvData = { ...provincesData };
+      const stillFailed: string[] = [];
+      let reloadedCount = 0;
+      
+      for (const code of failedProvinces) {
+        try {
+          const province = provinces.find(p => p.code === code);
+          if (!province) continue;
+          
+          const url = `${baseGeoJSONUrl}${code}.json`;
+          const response = await fetch(url);
+          
+          if (!response.ok) {
+            throw new Error(`Error al cargar ${province.name}: ${response.status}`);
+          }
+          
+          const data = await response.json();
+          newProvData[code] = data;
+          reloadedCount++;
+        } catch (error) {
+          stillFailed.push(code);
+        }
+      }
+      
+      if (reloadedCount > 0) {
+        setProvincesData(newProvData);
+        setFailedProvinces(stillFailed);
+        toast.success(`Se cargaron ${reloadedCount} provincias adicionales`);
+      } else {
+        toast.error("No se pudieron cargar las provincias faltantes");
+      }
+    } catch (error) {
+      console.error("Error al recargar provincias:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -245,6 +312,28 @@ const Map = () => {
               </div>
             )}
           </div>
+        )}
+        
+        {failedProvinces.length > 0 && !loading && (
+          <div className="absolute bottom-4 right-4">
+            <button
+              onClick={retryFailedProvinces}
+              className="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600"
+            >
+              Recargar provincias faltantes ({failedProvinces.length})
+            </button>
+          </div>
+        )}
+      </div>
+      
+      <div className="flex flex-wrap gap-2 justify-center">
+        <p className="text-sm text-gray-600 text-center">
+          Provincias cargadas: {loadedProvinces.length}/{provinces.length}
+        </p>
+        {failedProvinces.length > 0 && (
+          <p className="text-sm text-red-500 text-center">
+            Provincias faltantes: {provinces.filter(p => failedProvinces.includes(p.code)).map(p => p.name).join(", ")}
+          </p>
         )}
       </div>
       

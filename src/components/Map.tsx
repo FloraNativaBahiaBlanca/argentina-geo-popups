@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { toast } from '@/components/ui/sonner';
 import {
@@ -11,6 +12,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Province {
   name: string;
@@ -58,72 +61,85 @@ const Map = () => {
   const [hoveredProvince, setHoveredProvince] = useState<string | null>(null);
   const [loadedProvinces, setLoadedProvinces] = useState<string[]>([]);
   const [failedProvinces, setFailedProvinces] = useState<string[]>([]);
+  const [loadingProgress, setLoadingProgress] = useState(0);
   
   // Cargar los datos GeoJSON de las provincias
-  const fetchProvinceData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      setLoadedProvinces([]);
-      setFailedProvinces([]);
-      
-      const provData: Record<string, any> = {};
-      let errorCount = 0;
-      const loaded: string[] = [];
-      const failed: string[] = [];
-      
-      // Cargar cada provincia por separado
-      const promises = provinces.map(async (province) => {
-        try {
-          const url = `${baseGeoJSONUrl}${province.code}.json`;
-          console.log(`Intentando cargar: ${province.name} desde ${url}`);
-          
-          const response = await fetch(url);
-          
-          if (!response.ok) {
-            throw new Error(`Error al cargar ${province.name}: ${response.status}`);
+  useEffect(() => {
+    const fetchProvinceData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        setLoadedProvinces([]);
+        setFailedProvinces([]);
+        
+        const provData: Record<string, any> = {};
+        let errorCount = 0;
+        const loaded: string[] = [];
+        const failed: string[] = [];
+        
+        // Calcular progreso
+        const totalProvinces = provinces.length;
+        let completedCount = 0;
+        
+        // Cargar cada provincia por separado
+        for (const province of provinces) {
+          try {
+            const url = `${baseGeoJSONUrl}${province.code}.json`;
+            console.log(`Intentando cargar: ${province.name} desde ${url}`);
+            
+            const response = await fetch(url, { cache: 'no-store' });
+            
+            if (!response.ok) {
+              throw new Error(`Error al cargar ${province.name}: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            provData[province.code] = data;
+            loaded.push(province.code);
+            console.log(`Provincia cargada con éxito: ${province.name}`);
+          } catch (provinceError) {
+            console.error(`Error cargando ${province.name}:`, provinceError);
+            errorCount++;
+            failed.push(province.code);
+          } finally {
+            // Actualizar progreso
+            completedCount++;
+            const progress = Math.round((completedCount / totalProvinces) * 100);
+            setLoadingProgress(progress);
           }
-          
-          const data = await response.json();
-          provData[province.code] = data;
-          loaded.push(province.code);
-          console.log(`Provincia cargada con éxito: ${province.name}`);
-          
-        } catch (provinceError) {
-          console.error(`Error cargando ${province.name}:`, provinceError);
-          errorCount++;
-          failed.push(province.code);
         }
-      });
-      
-      await Promise.allSettled(promises);
-      setProvincesData(provData);
-      setLoadedProvinces(loaded);
-      setFailedProvinces(failed);
-      
-      if (errorCount === provinces.length) {
-        throw new Error("No se pudo cargar ninguna provincia");
-      } else if (errorCount > 0) {
-        const failedNames = provinces
-          .filter(p => failed.includes(p.code))
-          .map(p => p.name)
-          .join(", ");
-        toast.warning(`No se pudieron cargar ${errorCount} provincias: ${failedNames}`);
+        
+        setProvincesData(provData);
+        setLoadedProvinces(loaded);
+        setFailedProvinces(failed);
+        
+        if (errorCount === provinces.length) {
+          throw new Error("No se pudo cargar ninguna provincia");
+        } else if (errorCount > 0) {
+          const failedNames = provinces
+            .filter(p => failed.includes(p.code))
+            .map(p => p.name)
+            .join(", ");
+          toast.warning(`No se pudieron cargar ${errorCount} provincias: ${failedNames}`);
+        }
+        
+        processGeoJSONData(provData);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error al cargar los datos de provincias:", error);
+        setError(`No se pudieron cargar las provincias. ${error instanceof Error ? error.message : 'Error desconocido'}`);
+        setLoading(false);
       }
-      
-      setLoading(false);
-    } catch (error) {
-      console.error("Error al cargar los datos de provincias:", error);
-      setError(`No se pudieron cargar las provincias. ${error instanceof Error ? error.message : 'Error desconocido'}`);
-      setLoading(false);
-    }
-  };
+    };
+    
+    fetchProvinceData();
+  }, []);
 
   // Procesar los datos GeoJSON para generar los paths de SVG
-  useEffect(() => {
-    if (Object.keys(provincesData).length === 0) return;
-
+  const processGeoJSONData = (data: Record<string, any>) => {
     try {
+      if (Object.keys(data).length === 0) return;
+      
       // Crear un objeto para almacenar los paths de cada provincia
       const svgPaths: { [key: string]: string } = {};
       
@@ -133,10 +149,10 @@ const Map = () => {
       let maxX = -Infinity;
       let maxY = -Infinity;
       
-      Object.entries(provincesData).forEach(([code, data]) => {
-        if (!data || !data.features) return;
+      Object.entries(data).forEach(([code, geoData]) => {
+        if (!geoData || !geoData.features) return;
         
-        data.features.forEach((feature: any) => {
+        geoData.features.forEach((feature: any) => {
           if (feature.geometry && feature.geometry.coordinates) {
             const { geometry } = feature;
             
@@ -185,17 +201,11 @@ const Map = () => {
       setViewBox(`${minX - width * margin} ${minY - height * margin} ${width * (1 + 2 * margin)} ${height * (1 + 2 * margin)}`);
       
       setPaths(svgPaths);
-      
-      // Verificar si Córdoba está cargada
-      if (!svgPaths['CORDOBA'] && !failedProvinces.includes('CORDOBA')) {
-        console.warn("Córdoba no se cargó correctamente en el mapa");
-        toast.error("No se pudo cargar la provincia de Córdoba");
-      }
     } catch (error) {
       console.error("Error al procesar los datos GeoJSON:", error);
       toast.error("Error al procesar los datos del mapa");
     }
-  }, [provincesData, failedProvinces]);
+  };
 
   // Función para manejar el clic en una provincia
   const handleProvinceClick = (code: string) => {
@@ -219,7 +229,7 @@ const Map = () => {
           if (!province) continue;
           
           const url = `${baseGeoJSONUrl}${code}.json`;
-          const response = await fetch(url);
+          const response = await fetch(url, { cache: 'no-store' });
           
           if (!response.ok) {
             throw new Error(`Error al cargar ${province.name}: ${response.status}`);
@@ -235,6 +245,7 @@ const Map = () => {
       
       if (reloadedCount > 0) {
         setProvincesData(newProvData);
+        processGeoJSONData(newProvData);
         setFailedProvinces(stillFailed);
         toast.success(`Se cargaron ${reloadedCount} provincias adicionales`);
       } else {
@@ -251,10 +262,12 @@ const Map = () => {
     <div className="flex flex-col items-center gap-4 w-full max-w-6xl mx-auto p-4">
       <h1 className="text-3xl font-bold text-center mb-2">Mapa Interactivo de Argentina</h1>
       
-      <div className="w-full h-[600px] rounded-lg overflow-hidden border shadow-lg">
+      <div className="w-full h-[600px] rounded-lg overflow-hidden border shadow-lg relative">
         {loading && (
-          <div className="flex items-center justify-center h-full bg-gray-100">
-            <p className="text-gray-600">Cargando datos del mapa...</p>
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 z-10">
+            <p className="text-gray-600 mb-2">Cargando datos del mapa...</p>
+            <Progress value={loadingProgress} className="w-64 h-2" />
+            <p className="text-sm text-gray-500 mt-2">{loadingProgress}%</p>
           </div>
         )}
         
@@ -267,7 +280,7 @@ const Map = () => {
           </div>
         )}
         
-        {!loading && Object.keys(paths).length > 0 && (
+        {Object.keys(paths).length > 0 && (
           <div className="relative w-full h-full">
             <TooltipProvider>
               <svg

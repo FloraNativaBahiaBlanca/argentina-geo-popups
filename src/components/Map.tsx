@@ -616,6 +616,7 @@ const Map = () => {
                       });
                     }
                   }}
+                  className="outline-none focus:outline-none focus-visible:stroke-slate-900 focus-visible:[stroke-width:0.6]"
                   style={{ cursor: 'pointer' }}
                 />
               )}
@@ -638,7 +639,7 @@ const Map = () => {
                       handleProvinceClick(code);
                     }
                   }}
-                  className="transition-colors duration-200"
+                  className="outline-none transition-colors duration-200 focus:outline-none focus-visible:stroke-slate-900 focus-visible:[stroke-width:0.6]"
                   style={{ cursor: "pointer" }}
                 />
               ))}

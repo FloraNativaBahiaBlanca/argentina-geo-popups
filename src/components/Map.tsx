@@ -1,19 +1,13 @@
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from '@/components/ui/sonner';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { Progress } from "@/components/ui/progress";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { ExternalLink, X } from "lucide-react";
 
 interface Province {
   name: string;
@@ -217,6 +211,19 @@ const Map = () => {
   } | null>(null);
   const [santaCruzCenter, setSantaCruzCenter] = useState<{ x: number; y: number } | null>(null);
   const [countryHovered, setCountryHovered] = useState(false);
+
+  const selectedProvinceName = useMemo(() => {
+    if (!selectedProvince) return null;
+    return provinces.find((p) => p.code === selectedProvince)?.name ?? null;
+  }, [selectedProvince]);
+
+  const selectedProjects = useMemo(() => {
+    if (countryOpen) return argentinaProjects;
+    if (!selectedProvinceName) return null;
+    return provinceProjects[selectedProvinceName] ?? [];
+  }, [countryOpen, selectedProvinceName]);
+
+  const selectedTitle = countryOpen ? 'Argentina' : selectedProvinceName;
   
   // Cargar los datos GeoJSON de las provincias
   useEffect(() => {
@@ -398,6 +405,11 @@ const Map = () => {
     setSelectedProvince(selectedProvince === code ? null : code);
   };
 
+  const closePanel = () => {
+    setSelectedProvince(null);
+    setCountryOpen(false);
+  };
+
   const renderProject = (project: Project) => {
     const items: Array<{ label: string; value: string; href?: string }> = [];
 
@@ -422,20 +434,21 @@ const Map = () => {
     }
 
     return (
-      <div key={project.name} className="space-y-1">
-        <h4 className="font-semibold">{project.name}</h4>
-        <div className="text-sm space-y-1">
+      <div key={project.name} className="space-y-2">
+        <h4 className="text-sm font-semibold text-slate-900">{project.name}</h4>
+        <div className="text-sm space-y-1 text-slate-600">
           {items.map((it) => (
             <div key={`${project.name}-${it.label}`}>
-              <span className="font-medium">{it.label}: </span>
+              <span className="font-medium text-slate-700">{it.label}: </span>
               {it.href ? (
                 <a
                   href={it.href}
-                  className="text-blue-600 hover:underline break-words"
+                  className="inline-flex items-center gap-1 break-words text-emerald-700 underline-offset-4 hover:text-emerald-800 hover:underline"
                   target={it.href.startsWith('mailto:') ? undefined : '_blank'}
                   rel={it.href.startsWith('mailto:') ? undefined : 'noreferrer'}
                 >
                   {it.value}
+                  {!it.href.startsWith('mailto:') && <ExternalLink className="h-3.5 w-3.5" />}
                 </a>
               ) : (
                 <span className="break-words">{it.value}</span>
@@ -493,24 +506,24 @@ const Map = () => {
   };
 
   return (
-    <div className="flex flex-col items-center gap-4 w-full max-w-6xl mx-auto p-4">
-      <h1 className="text-3xl font-bold text-center mb-2">Mapa Interactivo de Argentina</h1>
-
-      <div className="w-full max-w-4xl text-gray-700 text-center space-y-3">
-        <p>
-          Desde Flora Nativa Bahía Blanca creemos en la divulgación como una herramienta clave para educar y concientizar sobre la gran diversidad floral y paisajística que existe en nuestro país. Por eso, este mapa interactivo reúne proyectos de divulgación sobre plantas nativas que se desarrollan en distintos puntos de la Argentina.
+    <div className="w-full space-y-6">
+      <header className="space-y-3">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900 md:text-3xl">
+            Mapa interactivo de proyectos de divulgación
+          </h1>
+          <p className="max-w-3xl text-sm leading-relaxed text-slate-600 md:text-base">
+            Desde Flora Nativa Bahía Blanca creemos en la divulgación como una herramienta clave para educar y concientizar sobre la gran diversidad floral y paisajística que existe en nuestro país. Por eso, este mapa interactivo reúne proyectos de divulgación sobre plantas nativas que se desarrollan en distintos puntos de la Argentina.
+          </p>
+        </div>
+        <p className="max-w-3xl text-sm leading-relaxed text-slate-600 md:text-base">
+          Al hacer clic sobre cada provincia, podrás conocer iniciativas que promueven la educación ambiental y la preservación de nuestra biodiversidad. ¡Te invitamos a explorarlos, apoyarlos y compartirlos!
         </p>
-        <p>
-          Al hacer clic sobre cada provincia, podrás conocer iniciativas que promueven la educación ambiental y la preservación de nuestra biodiversidad.
-        </p>
-        <p>
-          ¡Te invitamos a explorarlos, apoyarlos y compartirlos para seguir fortaleciendo esta red de saberes y compromiso con la flora autóctona!
-        </p>
-        <p>
+        <p className="max-w-3xl text-sm leading-relaxed text-slate-600 md:text-base">
           Si conocés o formás parte de un proyecto que te gustaría incluir en este mapa,{' '}
           <a
             href="https://floranativabb.com.ar/contacto/"
-            className="text-blue-600 hover:underline"
+            className="text-emerald-700 underline-offset-4 hover:text-emerald-800 hover:underline"
             target="_blank"
             rel="noreferrer"
           >
@@ -518,14 +531,30 @@ const Map = () => {
           </a>
           .
         </p>
-      </div>
-      
-      <div className="w-full h-[600px] rounded-lg overflow-hidden border shadow-lg relative">
+      </header>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Badge
+                variant="outline"
+                className="border-emerald-200/70 bg-emerald-50 text-emerald-900"
+              >
+                Explorá por provincias
+              </Badge>
+              <span className="text-xs text-slate-500">
+                Punto “Argentina” para info general
+              </span>
+            </div>
+          </div>
+
+          <div className="relative h-[62vh] min-h-[520px] w-full overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-sm">
         {loading && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 z-10">
-            <p className="text-gray-600 mb-2">Cargando datos del mapa...</p>
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-50">
+            <p className="mb-3 text-sm font-medium text-slate-700">Cargando mapa...</p>
             <Progress value={loadingProgress} className="w-64 h-2" />
-            <p className="text-sm text-gray-500 mt-2">{loadingProgress}%</p>
+            <p className="mt-2 text-xs text-slate-500">{loadingProgress}%</p>
           </div>
         )}
         
@@ -539,132 +568,158 @@ const Map = () => {
         )}
         
         {Object.keys(paths).length > 0 && (
-          <div className="relative w-full h-full">
-            <TooltipProvider>
-              <svg
-                viewBox={viewBox}
-                className="w-full h-full"
-                preserveAspectRatio="xMidYMid meet"
-                style={{ transform: "scale(1, -1)" }} 
-              >
-                {mapBounds && (
-                  <Popover
-                    open={countryOpen}
-                    onOpenChange={(open) => {
-                      setCountryOpen(open);
-                      if (open) setSelectedProvince(null);
-                    }}
-                  >
-                    <PopoverTrigger asChild>
-                      <circle
-                        cx={Math.max(
-                          mapBounds.maxX + mapBounds.width * 0.015,
-                          Math.min(
-                            mapBounds.maxX + mapBounds.width * 0.045,
-                            (santaCruzCenter?.x ?? mapBounds.maxX) + mapBounds.width * 0.12
-                          )
-                        )}
-                        cy={Math.max(
-                          mapBounds.minY + mapBounds.height * 0.01,
-                          Math.min(
-                            mapBounds.maxY - mapBounds.height * 0.01,
-                            (santaCruzCenter?.y ?? mapBounds.minY) - mapBounds.height * 0.08
-                          )
-                        )}
-                        r={2}
-                        fill={(countryOpen || countryHovered) ? ACTIVE_FILL_COLOR : BASE_FILL_COLOR}
-                        stroke="#ffffff"
-                        strokeWidth={0.25}
-                        onMouseEnter={() => setCountryHovered(true)}
-                        onMouseLeave={() => setCountryHovered(false)}
-                        style={{ cursor: 'pointer' }}
-                        aria-label="Ver información general de Argentina"
-                      />
-                    </PopoverTrigger>
-                    <PopoverContent
-                      className="bg-white p-3 rounded-lg shadow-lg max-w-xs border z-50"
-                      side="top"
-                      sideOffset={8}
-                    >
-                      <h3 className="font-bold text-lg">Argentina</h3>
-                      <div className="mt-2 space-y-3">
-                        {argentinaProjects.map(renderProject)}
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                )}
+          <div className="relative h-full w-full">
+            <svg
+              viewBox={viewBox}
+              className="h-full w-full"
+              preserveAspectRatio="xMidYMid meet"
+              style={{ transform: "scale(1, -1)" }}
+            >
+              {mapBounds && (
+                <circle
+                  cx={Math.max(
+                    mapBounds.maxX + mapBounds.width * 0.015,
+                    Math.min(
+                      mapBounds.maxX + mapBounds.width * 0.045,
+                      (santaCruzCenter?.x ?? mapBounds.maxX) + mapBounds.width * 0.12
+                    )
+                  )}
+                  cy={Math.max(
+                    mapBounds.minY + mapBounds.height * 0.01,
+                    Math.min(
+                      mapBounds.maxY - mapBounds.height * 0.01,
+                      (santaCruzCenter?.y ?? mapBounds.minY) - mapBounds.height * 0.08
+                    )
+                  )}
+                  r={2}
+                  fill={(countryOpen || countryHovered) ? ACTIVE_FILL_COLOR : BASE_FILL_COLOR}
+                  stroke="#ffffff"
+                  strokeWidth={0.25}
+                  onMouseEnter={() => setCountryHovered(true)}
+                  onMouseLeave={() => setCountryHovered(false)}
+                  onClick={() => {
+                    setCountryOpen((prev) => {
+                      const next = !prev;
+                      if (next) setSelectedProvince(null);
+                      return next;
+                    });
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setCountryOpen((prev) => {
+                        const next = !prev;
+                        if (next) setSelectedProvince(null);
+                        return next;
+                      });
+                    }
+                  }}
+                  style={{ cursor: 'pointer' }}
+                />
+              )}
 
-                {Object.entries(paths).map(([code, pathData]) => {
-                  const province = provinces.find(p => p.code === code);
-                  const projects = province?.name ? (provinceProjects[province.name] || []) : [];
-                  return (
-                    <Popover key={code} open={selectedProvince === code} onOpenChange={(open) => {
-                      if (!open) setSelectedProvince(null);
-                    }}>
-                      <PopoverTrigger asChild>
-                        <path
-                          d={pathData}
-                          fill={hoveredProvince === code || selectedProvince === code ? ACTIVE_FILL_COLOR : BASE_FILL_COLOR}
-                          stroke="#ffffff"
-                          strokeWidth="0.1"
-                          onClick={() => handleProvinceClick(code)}
-                          onMouseEnter={() => setHoveredProvince(code)}
-                          onMouseLeave={() => setHoveredProvince(null)}
-                          style={{ cursor: "pointer" }}
-                        />
-                      </PopoverTrigger>
-                      <PopoverContent 
-                        className="bg-white p-3 rounded-lg shadow-lg max-w-xs border z-50"
-                        side="top"
-                        sideOffset={5}
-                      >
-                        <h3 className="font-bold text-lg">
-                          {province?.name}
-                        </h3>
-                        <div className="mt-2 space-y-3">
-                          {projects.length > 0 ? (
-                            projects.map(renderProject)
-                          ) : (
-                            <p className="text-sm">
-                              No hemos encontrado un proyecto de divulgación para esta provincia.
-                            </p>
-                          )}
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                  );
-                })}
-              </svg>
-            </TooltipProvider>
+              {Object.entries(paths).map(([code, pathData]) => (
+                <path
+                  key={code}
+                  d={pathData}
+                  fill={hoveredProvince === code || selectedProvince === code ? ACTIVE_FILL_COLOR : BASE_FILL_COLOR}
+                  stroke="#ffffff"
+                  strokeWidth={hoveredProvince === code || selectedProvince === code ? "0.25" : "0.15"}
+                  onClick={() => handleProvinceClick(code)}
+                  onMouseEnter={() => setHoveredProvince(code)}
+                  onMouseLeave={() => setHoveredProvince(null)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleProvinceClick(code);
+                    }
+                  }}
+                  className="transition-colors duration-200"
+                  style={{ cursor: "pointer" }}
+                />
+              ))}
+            </svg>
           </div>
         )}
         
         {failedProvinces.length > 0 && !loading && (
           <div className="absolute bottom-4 right-4">
-            <button
+            <Button
               onClick={retryFailedProvinces}
-              className="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600"
+              variant="outline"
+              size="sm"
+              className="bg-white"
             >
-              Recargar provincias faltantes ({failedProvinces.length})
-            </button>
+              Recargar provincias ({failedProvinces.length})
+            </Button>
           </div>
         )}
+          </div>
+        </div>
+
+        <div className="lg:sticky lg:top-8">
+          <Card className="overflow-hidden rounded-2xl border-slate-200/70 shadow-sm">
+            <CardHeader className="space-y-1">
+              <div className="flex items-start justify-between gap-3">
+                <div className="space-y-1">
+                  <CardTitle className="text-base">
+                    {selectedTitle ?? 'Detalle'}
+                  </CardTitle>
+                  <p className="text-xs text-slate-500">
+                    {selectedTitle ? 'Información y enlaces' : 'Seleccioná una provincia o el punto de Argentina'}
+                  </p>
+                </div>
+                {(selectedProvince || countryOpen) && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={closePanel}
+                    className="h-8 w-8 text-slate-500 hover:text-slate-900"
+                    aria-label="Cerrar"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            </CardHeader>
+            <Separator />
+            <CardContent className="p-0">
+              <ScrollArea className="h-[360px] lg:h-[520px]">
+                <div className="space-y-4 p-6">
+                  {!selectedTitle && (
+                    <div className="space-y-3">
+                      <p className="text-sm leading-relaxed text-slate-600">
+                        Hacé clic sobre una provincia para ver proyectos de divulgación, o seleccioná el punto “Argentina” para información general.
+                      </p>
+                      <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                        <p className="text-xs text-slate-600">
+                          Tip: podés explorar rápidamente pasando el cursor por el mapa y seleccionando provincias.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedTitle && (
+                    <div className="space-y-4">
+                      {selectedProjects && selectedProjects.length > 0 ? (
+                        selectedProjects.map(renderProject)
+                      ) : (
+                        <p className="text-sm text-slate-600">
+                          No hemos encontrado un proyecto de divulgación para esta provincia.
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </div>
       </div>
-      
-      <div className="flex flex-wrap gap-2 justify-center">
-        <p className="text-sm text-gray-600 text-center">
-          Provincias cargadas: {loadedProvinces.length}/{provinces.length}
-        </p>
-        {failedProvinces.length > 0 && (
-          <p className="text-sm text-red-500 text-center">
-            Provincias faltantes: {provinces.filter(p => failedProvinces.includes(p.code)).map(p => p.name).join(", ")}
-          </p>
-        )}
-      </div>
-      
-      <p className="text-sm text-gray-600 text-center">
-        Haz clic en las provincias para ver información sobre cada una
-      </p>
     </div>
   );
 };

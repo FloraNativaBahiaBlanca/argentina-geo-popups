@@ -21,6 +21,147 @@ interface Province {
   code: string;
 }
 
+interface Project {
+  name: string;
+  instagram?: string;
+  x?: string;
+  facebook?: string;
+  web?: string;
+  contacto?: string;
+}
+
+const normalizeUrl = (value: string) => {
+  const trimmed = value.trim();
+  if (!trimmed) return trimmed;
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed;
+  return `https://${trimmed}`;
+};
+
+const provinceProjects: Record<string, Project[]> = {
+  'Buenos Aires': [
+    {
+      name: 'Nativas bonaerenses',
+      instagram: 'www.instagram.com/nativas.bonaerenses',
+      contacto: 'nativasbonaerensess@gmail.com',
+    },
+    {
+      name: 'Flora del Sistema de Tandilia',
+      instagram: 'www.instagram.com/flora.tandilia',
+    },
+    {
+      name: 'Flora de Punta Alta',
+      instagram: 'www.instagram.com/flora.de.punta.alta',
+    },
+    {
+      name: 'Flora Nativa Bahía Blanca',
+      instagram: 'www.instagram.com/floranativabb',
+      facebook: 'www.facebook.com/floranativabb',
+      web: 'https://floranativabb.com.ar',
+      contacto: 'floranativabb@gmail.com',
+    },
+  ],
+  Catamarca: [
+    {
+      name: 'Flora Catamarqueña',
+      instagram: 'www.instagram.com/floracatamarquena',
+    },
+    {
+      name: 'Nativas de las Sierras (Catamarca y Córdoba)',
+      instagram: 'www.instagram.com/nativas.de.las.sierras',
+    },
+  ],
+  Chubut: [
+    {
+      name: 'Nativas de Chubut',
+      instagram: 'www.instagram.com/nativas.chubut',
+    },
+  ],
+  Córdoba: [
+    {
+      name: 'Nativas de Córdoba',
+      instagram: 'www.instagram.com/nativascordoba',
+    },
+    {
+      name: 'Nativas de las Sierras (Catamarca y Córdoba)',
+      instagram: 'www.instagram.com/nativas.de.las.sierras',
+    },
+  ],
+  Corrientes: [
+    {
+      name: 'Nativas de Corrientes',
+      instagram: 'www.instagram.com/nativasdecorrientes_arg',
+    },
+  ],
+  Mendoza: [
+    {
+      name: 'Flora Mendocina',
+      instagram: 'www.instagram.com/flora.mendocina',
+      facebook: 'www.facebook.com/flora.mendocina',
+    },
+  ],
+  Misiones: [
+    {
+      name: 'Flora Misionera',
+      instagram: 'www.instagram.com/floramisionera',
+    },
+  ],
+  Salta: [
+    {
+      name: 'Nativas de Salta',
+      instagram: 'www.instagram.com/nativasdesalta',
+    },
+    {
+      name: 'Nativas salteñas',
+      instagram: 'www.instagram.com/saltanativas',
+    },
+  ],
+  'San Luis': [
+    {
+      name: 'Nativas de San Luis',
+      instagram: 'www.instagram.com/nativasdesanluis',
+    },
+  ],
+  'Santiago del Estero': [
+    {
+      name: 'Nativas de Santiago del Estero',
+      instagram: 'www.instagram.com/nativas_santiagodelestero',
+    },
+  ],
+  'Tierra del Fuego': [
+    {
+      name: 'Flora de Tierra del Fuego',
+      instagram: 'www.instagram.com/flora.de.tierradelfuego',
+      facebook: 'www.facebook.com/floratdf',
+    },
+  ],
+  Tucumán: [
+    {
+      name: 'Nativas tucumanas',
+      instagram: 'www.instagram.com/nativastucumanas',
+    },
+    {
+      name: 'Fundación Forestar',
+      instagram: 'www.instagram.com/fundacionforestar',
+    },
+  ],
+};
+
+const argentinaProjects: Project[] = [
+  {
+    name: 'Helechos y Licófitas de Argentina',
+    instagram: 'www.instagram.com/helechosylicofitasdeargentina',
+    x: 'https://x.com/helechylicofarg',
+    contacto: 'helechosylicofitasdeargentina@gmail.com',
+  },
+  {
+    name: 'Sociedad Argentina de Botánica',
+    instagram: 'www.instagram.com/socargbot',
+    x: 'https://x.com/sabotanica',
+    facebook: 'www.facebook.com/sabotanica',
+    web: 'https://botanicaargentina.com.ar',
+  },
+];
+
 // Mantenemos el array de provincias con información
 const provinces: Province[] = [
   { name: 'Buenos Aires', description: 'La provincia más poblada de Argentina, sede de importantes centros urbanos e industriales.', code: 'BUENOSAIRES' },
@@ -56,6 +197,7 @@ const Map = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedProvince, setSelectedProvince] = useState<string | null>(null);
+  const [countryOpen, setCountryOpen] = useState(false);
   const [viewBox, setViewBox] = useState<string>("0 0 800 800");
   const [paths, setPaths] = useState<{ [key: string]: string }>({});
   const [hoveredProvince, setHoveredProvince] = useState<string | null>(null);
@@ -210,7 +352,57 @@ const Map = () => {
   // Función para manejar el clic en una provincia
   const handleProvinceClick = (code: string) => {
     console.log("Provincia clickeada:", code);
+    setCountryOpen(false);
     setSelectedProvince(selectedProvince === code ? null : code);
+  };
+
+  const renderProject = (project: Project) => {
+    const items: Array<{ label: string; value: string; href?: string }> = [];
+
+    if (project.instagram) {
+      const href = normalizeUrl(project.instagram);
+      items.push({ label: 'Instagram', value: project.instagram, href });
+    }
+    if (project.x) {
+      const href = normalizeUrl(project.x);
+      items.push({ label: 'X', value: project.x, href });
+    }
+    if (project.facebook) {
+      const href = normalizeUrl(project.facebook);
+      items.push({ label: 'Facebook', value: project.facebook, href });
+    }
+    if (project.web) {
+      const href = normalizeUrl(project.web);
+      items.push({ label: 'Web', value: project.web, href });
+    }
+    if (project.contacto) {
+      items.push({ label: 'Contacto', value: project.contacto, href: `mailto:${project.contacto}` });
+    }
+
+    return (
+      <div key={project.name} className="space-y-1">
+        <h4 className="font-semibold">{project.name}</h4>
+        <div className="text-sm space-y-1">
+          {items.map((it) => (
+            <div key={`${project.name}-${it.label}`}>
+              <span className="font-medium">{it.label}: </span>
+              {it.href ? (
+                <a
+                  href={it.href}
+                  className="text-blue-600 hover:underline break-words"
+                  target={it.href.startsWith('mailto:') ? undefined : '_blank'}
+                  rel={it.href.startsWith('mailto:') ? undefined : 'noreferrer'}
+                >
+                  {it.value}
+                </a>
+              ) : (
+                <span className="break-words">{it.value}</span>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   };
 
   // Función para intentar volver a cargar las provincias fallidas
@@ -261,7 +453,56 @@ const Map = () => {
   return (
     <div className="flex flex-col items-center gap-4 w-full max-w-6xl mx-auto p-4">
       <h1 className="text-3xl font-bold text-center mb-2">Mapa Interactivo de Argentina</h1>
+
+      <div className="w-full max-w-4xl text-gray-700 text-center space-y-3">
+        <p>
+          Desde Flora Nativa Bahía Blanca creemos en la divulgación como una herramienta clave para educar y concientizar sobre la gran diversidad floral y paisajística que existe en nuestro país. Por eso, este mapa interactivo reúne proyectos de divulgación sobre plantas nativas que se desarrollan en distintos puntos de la Argentina.
+        </p>
+        <p>
+          Al hacer clic sobre cada provincia, podrás conocer iniciativas que promueven la educación ambiental y la preservación de nuestra biodiversidad.
+        </p>
+        <p>
+          ¡Te invitamos a explorarlos, apoyarlos y compartirlos para seguir fortaleciendo esta red de saberes y compromiso con la flora autóctona!
+        </p>
+        <p>
+          Si conocés o formás parte de un proyecto que te gustaría incluir en este mapa,{' '}
+          <a
+            href="https://floranativabb.com.ar/contacto/"
+            className="text-blue-600 hover:underline"
+            target="_blank"
+            rel="noreferrer"
+          >
+            contactanos
+          </a>
+          .
+        </p>
+      </div>
       
+      <div className="w-full max-w-4xl flex justify-end">
+        <Popover open={countryOpen} onOpenChange={(open) => {
+          setCountryOpen(open);
+          if (open) setSelectedProvince(null);
+        }}>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              aria-label="Ver información general de Argentina"
+              className="w-3 h-3 rounded-full bg-emerald-600 hover:bg-emerald-700 transition-colors"
+            />
+          </PopoverTrigger>
+          <PopoverContent
+            className="bg-white p-3 rounded-lg shadow-lg max-w-xs border z-50"
+            side="top"
+            sideOffset={8}
+          >
+            <h3 className="font-bold text-lg">Argentina</h3>
+            <div className="mt-2 space-y-3">
+              {argentinaProjects.map(renderProject)}
+            </div>
+          </PopoverContent>
+        </Popover>
+      </div>
+
       <div className="w-full h-[600px] rounded-lg overflow-hidden border shadow-lg relative">
         {loading && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 z-10">
@@ -291,6 +532,7 @@ const Map = () => {
               >
                 {Object.entries(paths).map(([code, pathData]) => {
                   const province = provinces.find(p => p.code === code);
+                  const projects = province?.name ? (provinceProjects[province.name] || []) : [];
                   return (
                     <Popover key={code} open={selectedProvince === code} onOpenChange={(open) => {
                       if (!open) setSelectedProvince(null);
@@ -316,9 +558,15 @@ const Map = () => {
                         <h3 className="font-bold text-lg">
                           {province?.name}
                         </h3>
-                        <p className="text-sm mt-1">
-                          {province?.description}
-                        </p>
+                        <div className="mt-2 space-y-3">
+                          {projects.length > 0 ? (
+                            projects.map(renderProject)
+                          ) : (
+                            <p className="text-sm">
+                              No hemos encontrado un proyecto de divulgación para esta provincia.
+                            </p>
+                          )}
+                        </div>
                       </PopoverContent>
                     </Popover>
                   );

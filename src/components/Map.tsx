@@ -192,6 +192,9 @@ const provinces: Province[] = [
 // URL para los datos GeoJSON
 const baseGeoJSONUrl = 'https://raw.githubusercontent.com/alvarezgarcia/provincias-argentinas-geojson/refs/heads/master/';
 
+const BASE_FILL_COLOR = '#68d070';
+const ACTIVE_FILL_COLOR = '#55b85f';
+
 const Map = () => {
   const [provincesData, setProvincesData] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
@@ -204,6 +207,16 @@ const Map = () => {
   const [loadedProvinces, setLoadedProvinces] = useState<string[]>([]);
   const [failedProvinces, setFailedProvinces] = useState<string[]>([]);
   const [loadingProgress, setLoadingProgress] = useState(0);
+  const [mapBounds, setMapBounds] = useState<{
+    minX: number;
+    minY: number;
+    maxX: number;
+    maxY: number;
+    width: number;
+    height: number;
+  } | null>(null);
+  const [santaCruzCenter, setSantaCruzCenter] = useState<{ x: number; y: number } | null>(null);
+  const [countryHovered, setCountryHovered] = useState(false);
   
   // Cargar los datos GeoJSON de las provincias
   useEffect(() => {
@@ -290,6 +303,12 @@ const Map = () => {
       let minY = Infinity;
       let maxX = -Infinity;
       let maxY = -Infinity;
+
+      // Guardar bounds para Santa Cruz para posicionar el punto de Argentina
+      let santaMinX = Infinity;
+      let santaMinY = Infinity;
+      let santaMaxX = -Infinity;
+      let santaMaxY = -Infinity;
       
       Object.entries(data).forEach(([code, geoData]) => {
         if (!geoData || !geoData.features) return;
@@ -307,6 +326,13 @@ const Map = () => {
                   minY = Math.min(minY, coord[1]);
                   maxX = Math.max(maxX, coord[0]);
                   maxY = Math.max(maxY, coord[1]);
+
+                  if (code === 'SANTACRUZ') {
+                    santaMinX = Math.min(santaMinX, coord[0]);
+                    santaMinY = Math.min(santaMinY, coord[1]);
+                    santaMaxX = Math.max(santaMaxX, coord[0]);
+                    santaMaxY = Math.max(santaMaxY, coord[1]);
+                  }
                   return `${coord[0]},${coord[1]}`;
                 });
                 
@@ -323,6 +349,13 @@ const Map = () => {
                     minY = Math.min(minY, coord[1]);
                     maxX = Math.max(maxX, coord[0]);
                     maxY = Math.max(maxY, coord[1]);
+
+                    if (code === 'SANTACRUZ') {
+                      santaMinX = Math.min(santaMinX, coord[0]);
+                      santaMinY = Math.min(santaMinY, coord[1]);
+                      santaMaxX = Math.max(santaMaxX, coord[0]);
+                      santaMaxY = Math.max(santaMaxY, coord[1]);
+                    }
                     return `${coord[0]},${coord[1]}`;
                   });
                   
@@ -341,6 +374,15 @@ const Map = () => {
       // Añadir un margen del 5% alrededor del mapa
       const margin = 0.05;
       setViewBox(`${minX - width * margin} ${minY - height * margin} ${width * (1 + 2 * margin)} ${height * (1 + 2 * margin)}`);
+
+      setMapBounds({ minX, minY, maxX, maxY, width, height });
+
+      if (santaMinX !== Infinity && santaMinY !== Infinity && santaMaxX !== -Infinity && santaMaxY !== -Infinity) {
+        setSantaCruzCenter({
+          x: (santaMinX + santaMaxX) / 2,
+          y: (santaMinY + santaMaxY) / 2,
+        });
+      }
       
       setPaths(svgPaths);
     } catch (error) {
@@ -478,31 +520,6 @@ const Map = () => {
         </p>
       </div>
       
-      <div className="w-full max-w-4xl flex justify-end">
-        <Popover open={countryOpen} onOpenChange={(open) => {
-          setCountryOpen(open);
-          if (open) setSelectedProvince(null);
-        }}>
-          <PopoverTrigger asChild>
-            <button
-              type="button"
-              aria-label="Ver información general de Argentina"
-              className="w-3 h-3 rounded-full bg-emerald-600 hover:bg-emerald-700 transition-colors"
-            />
-          </PopoverTrigger>
-          <PopoverContent
-            className="bg-white p-3 rounded-lg shadow-lg max-w-xs border z-50"
-            side="top"
-            sideOffset={8}
-          >
-            <h3 className="font-bold text-lg">Argentina</h3>
-            <div className="mt-2 space-y-3">
-              {argentinaProjects.map(renderProject)}
-            </div>
-          </PopoverContent>
-        </Popover>
-      </div>
-
       <div className="w-full h-[600px] rounded-lg overflow-hidden border shadow-lg relative">
         {loading && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 z-10">
@@ -530,6 +547,53 @@ const Map = () => {
                 preserveAspectRatio="xMidYMid meet"
                 style={{ transform: "scale(1, -1)" }} 
               >
+                {mapBounds && (
+                  <Popover
+                    open={countryOpen}
+                    onOpenChange={(open) => {
+                      setCountryOpen(open);
+                      if (open) setSelectedProvince(null);
+                    }}
+                  >
+                    <PopoverTrigger asChild>
+                      <circle
+                        cx={Math.max(
+                          mapBounds.maxX + mapBounds.width * 0.015,
+                          Math.min(
+                            mapBounds.maxX + mapBounds.width * 0.045,
+                            (santaCruzCenter?.x ?? mapBounds.maxX) + mapBounds.width * 0.12
+                          )
+                        )}
+                        cy={Math.max(
+                          mapBounds.minY + mapBounds.height * 0.01,
+                          Math.min(
+                            mapBounds.maxY - mapBounds.height * 0.01,
+                            (santaCruzCenter?.y ?? mapBounds.minY) - mapBounds.height * 0.08
+                          )
+                        )}
+                        r={2}
+                        fill={(countryOpen || countryHovered) ? ACTIVE_FILL_COLOR : BASE_FILL_COLOR}
+                        stroke="#ffffff"
+                        strokeWidth={0.25}
+                        onMouseEnter={() => setCountryHovered(true)}
+                        onMouseLeave={() => setCountryHovered(false)}
+                        style={{ cursor: 'pointer' }}
+                        aria-label="Ver información general de Argentina"
+                      />
+                    </PopoverTrigger>
+                    <PopoverContent
+                      className="bg-white p-3 rounded-lg shadow-lg max-w-xs border z-50"
+                      side="top"
+                      sideOffset={8}
+                    >
+                      <h3 className="font-bold text-lg">Argentina</h3>
+                      <div className="mt-2 space-y-3">
+                        {argentinaProjects.map(renderProject)}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                )}
+
                 {Object.entries(paths).map(([code, pathData]) => {
                   const province = provinces.find(p => p.code === code);
                   const projects = province?.name ? (provinceProjects[province.name] || []) : [];
@@ -540,14 +604,13 @@ const Map = () => {
                       <PopoverTrigger asChild>
                         <path
                           d={pathData}
-                          fill={hoveredProvince === code || selectedProvince === code ? "#0066cc" : "#0080ff"}
+                          fill={hoveredProvince === code || selectedProvince === code ? ACTIVE_FILL_COLOR : BASE_FILL_COLOR}
                           stroke="#ffffff"
                           strokeWidth="0.1"
-                          className="transition-colors duration-200"
                           onClick={() => handleProvinceClick(code)}
                           onMouseEnter={() => setHoveredProvince(code)}
                           onMouseLeave={() => setHoveredProvince(null)}
-                          style={{ cursor: 'pointer' }}
+                          style={{ cursor: "pointer" }}
                         />
                       </PopoverTrigger>
                       <PopoverContent 

@@ -152,7 +152,7 @@ const argentinaProjects: Project[] = [
     instagram: 'www.instagram.com/socargbot',
     x: 'https://x.com/sabotanica',
     facebook: 'www.facebook.com/sabotanica',
-    web: 'https://botanicaargentina.com.ar',
+    web: 'https://botanicaargentina.org.ar',
   },
 ];
 

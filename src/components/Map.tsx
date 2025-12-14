@@ -212,6 +212,13 @@ const Map = () => {
   const [santaCruzCenter, setSantaCruzCenter] = useState<{ x: number; y: number } | null>(null);
   const [countryHovered, setCountryHovered] = useState(false);
 
+  const provinceNameByCode = useMemo(() => {
+    return provinces.reduce<Record<string, string>>((acc, province) => {
+      acc[province.code] = province.name;
+      return acc;
+    }, {});
+  }, []);
+
   const selectedProvinceName = useMemo(() => {
     if (!selectedProvince) return null;
     return provinces.find((p) => p.code === selectedProvince)?.name ?? null;
@@ -616,6 +623,8 @@ const Map = () => {
                       });
                     }
                   }}
+                  aria-label="Ver información general de Argentina"
+                  aria-pressed={countryOpen}
                   className="outline-none focus:outline-none focus-visible:stroke-slate-900 focus-visible:[stroke-width:0.6]"
                   style={{ cursor: 'pointer' }}
                 />
@@ -639,6 +648,8 @@ const Map = () => {
                       handleProvinceClick(code);
                     }
                   }}
+                  aria-label={`Seleccionar provincia ${provinceNameByCode[code] ?? code}`}
+                  aria-pressed={selectedProvince === code}
                   className="outline-none transition-colors duration-200 focus:outline-none focus-visible:stroke-slate-900 focus-visible:[stroke-width:0.6]"
                   style={{ cursor: "pointer" }}
                 />

@@ -544,7 +544,7 @@ const Map = () => {
                 Explorá por provincias
               </Badge>
               <span className="text-xs text-slate-500">
-                Punto “Argentina” para info general
+                Presiona el círculo para info general
               </span>
             </div>
           </div>
@@ -671,7 +671,7 @@ const Map = () => {
                     {selectedTitle ?? 'Detalle'}
                   </CardTitle>
                   <p className="text-xs text-slate-500">
-                    {selectedTitle ? 'Información y enlaces' : 'Seleccioná una provincia o el punto de Argentina'}
+                    {selectedTitle ? 'Información y enlaces' : 'Seleccioná una provincia'}
                   </p>
                 </div>
                 {(selectedProvince || countryOpen) && (
@@ -694,13 +694,8 @@ const Map = () => {
                   {!selectedTitle && (
                     <div className="space-y-3">
                       <p className="text-sm leading-relaxed text-slate-600">
-                        Hacé clic sobre una provincia para ver proyectos de divulgación, o seleccioná el punto “Argentina” para información general.
+                        Hacé clic sobre una provincia para ver proyectos de divulgación, o seleccioná el círculo para información general.
                       </p>
-                      <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                        <p className="text-xs text-slate-600">
-                          Tip: podés explorar rápidamente pasando el cursor por el mapa y seleccionando provincias.
-                        </p>
-                      </div>
                     </div>
                   )}
 

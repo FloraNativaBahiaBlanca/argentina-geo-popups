@@ -1,5 +1,5 @@
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type SVGProps } from 'react';
 import { toast } from '@/components/ui/sonner';
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +7,45 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ExternalLink, X } from "lucide-react";
+
+const IconExternalLink = ({ className, ...props }: SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={24}
+    height={24}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={2}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+    {...props}
+  >
+    <path d="M15 3h6v6" />
+    <path d="M10 14 21 3" />
+    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+  </svg>
+);
+
+const IconX = ({ className, ...props }: SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={24}
+    height={24}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={2}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+    {...props}
+  >
+    <path d="M18 6 6 18" />
+    <path d="m6 6 12 12" />
+  </svg>
+);
 
 interface Province {
   name: string;
@@ -455,7 +493,7 @@ const Map = () => {
                   rel={it.href.startsWith('mailto:') ? undefined : 'noreferrer'}
                 >
                   {it.value}
-                  {!it.href.startsWith('mailto:') && <ExternalLink className="h-3.5 w-3.5" />}
+                  {!it.href.startsWith('mailto:') && <IconExternalLink className="h-3.5 w-3.5" />}
                 </a>
               ) : (
                 <span className="break-words">{it.value}</span>
@@ -693,7 +731,7 @@ const Map = () => {
                     className="h-8 w-8 text-slate-500 hover:text-slate-900"
                     aria-label="Cerrar"
                   >
-                    <X className="h-4 w-4" />
+                    <IconX className="h-4 w-4" />
                   </Button>
                 )}
               </div>

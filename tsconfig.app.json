@@ -26,5 +26,15 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": ["src/components/ui/**/*"],
+  "files": [
+    "src/components/ui/badge.tsx",
+    "src/components/ui/button.tsx",
+    "src/components/ui/card.tsx",
+    "src/components/ui/progress.tsx",
+    "src/components/ui/scroll-area.tsx",
+    "src/components/ui/separator.tsx",
+    "src/components/ui/sonner.tsx"
+  ]
 }

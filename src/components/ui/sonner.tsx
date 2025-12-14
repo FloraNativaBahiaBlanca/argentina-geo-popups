@@ -1,14 +1,52 @@
-import { useTheme } from "next-themes"
+import * as React from "react"
 import { Toaster as Sonner, toast } from "sonner"
 
 type ToasterProps = React.ComponentProps<typeof Sonner>
 
+function getTheme(): NonNullable<ToasterProps["theme"]> {
+  if (typeof document === "undefined") return "system"
+
+  if (document.documentElement.classList.contains("dark")) return "dark"
+  if (document.documentElement.classList.contains("light")) return "light"
+
+  if (typeof window !== "undefined" && typeof window.matchMedia === "function") {
+    return window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light"
+  }
+
+  return "system"
+}
+
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme()
+  const [theme, setTheme] = React.useState<ToasterProps["theme"]>(() => getTheme())
+
+  React.useEffect(() => {
+    setTheme(getTheme())
+
+    const mediaQuery =
+      typeof window !== "undefined" && typeof window.matchMedia === "function"
+        ? window.matchMedia("(prefers-color-scheme: dark)")
+        : null
+
+    const onMediaChange = () => setTheme(getTheme())
+    mediaQuery?.addEventListener?.("change", onMediaChange)
+
+    const observer = new MutationObserver(() => setTheme(getTheme()))
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    })
+
+    return () => {
+      mediaQuery?.removeEventListener?.("change", onMediaChange)
+      observer.disconnect()
+    }
+  }, [])
 
   return (
     <Sonner
-      theme={theme as ToasterProps["theme"]}
+      theme={theme}
       className="toaster group"
       toastOptions={{
         classNames: {

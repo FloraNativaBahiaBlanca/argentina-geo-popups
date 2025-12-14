@@ -7,6 +7,8 @@ export default {
 		"./components/**/*.{ts,tsx}",
 		"./app/**/*.{ts,tsx}",
 		"./src/**/*.{ts,tsx}",
+		"!./src/components/ui/**/*.{ts,tsx}",
+		"./src/components/ui/{badge,button,card,progress,scroll-area,separator,sonner}.tsx",
 	],
 	prefix: "",
 	theme: {

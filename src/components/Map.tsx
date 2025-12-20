@@ -7,6 +7,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Leaf, Sprout, University } from "lucide-react";
 
 const IconExternalLink = ({ className, ...props }: SVGProps<SVGSVGElement>) => (
   <svg
@@ -267,6 +269,35 @@ const Map = () => {
     if (!selectedProvinceName) return null;
     return provinceProjects[selectedProvinceName] ?? [];
   }, [countryOpen, selectedProvinceName]);
+
+  const projectCategories = useMemo(() => {
+    const projects = selectedProjects ?? [];
+
+    return [
+      {
+        id: 'divulgacion-general',
+        title: 'Divulgación general',
+        Icon: Leaf,
+        projects,
+      },
+      {
+        id: 'educativos-institucionales',
+        title: 'Educativos/Institucionales',
+        Icon: University,
+        projects: [],
+      },
+      {
+        id: 'restauracion-conservacion',
+        title: 'Restauración y conservación',
+        Icon: Sprout,
+        projects: [],
+      },
+    ];
+  }, [selectedProjects]);
+
+  const visibleProjectCategories = useMemo(() => {
+    return projectCategories.filter((category) => category.projects.length > 0);
+  }, [projectCategories]);
 
   const selectedTitle = countryOpen ? 'Argentina' : selectedProvinceName;
   
@@ -751,7 +782,34 @@ const Map = () => {
                   {selectedTitle && (
                     <div className="space-y-4">
                       {selectedProjects && selectedProjects.length > 0 ? (
-                        selectedProjects.map(renderProject)
+                        <Accordion
+                          type="single"
+                          collapsible
+                          className="w-full"
+                        >
+                          {visibleProjectCategories.map((category) => (
+                            <AccordionItem
+                              key={category.id}
+                              value={category.id}
+                              className="border-0 rounded-lg border border-slate-200/70 bg-white overflow-hidden"
+                            >
+                              <AccordionTrigger className="px-4 py-3 text-sm font-semibold text-slate-900 bg-slate-50/70 hover:bg-slate-100 hover:no-underline transition-colors data-[state=open]:bg-emerald-50">
+                                <div className="flex items-center gap-2">
+                                  <category.Icon className="h-4 w-4 text-emerald-700" aria-hidden="true" />
+                                  <span>{category.title}</span>
+                                  <span className="text-xs text-slate-500">
+                                    ({category.projects.length})
+                                  </span>
+                                </div>
+                              </AccordionTrigger>
+                              <AccordionContent>
+                                <div className="space-y-4 border-t border-slate-200/70 bg-white px-4 pt-4">
+                                  {category.projects.map(renderProject)}
+                                </div>
+                              </AccordionContent>
+                            </AccordionItem>
+                          ))}
+                        </Accordion>
                       ) : (
                         <p className="text-sm text-slate-600">
                           No hemos encontrado un proyecto de divulgación para esta provincia.

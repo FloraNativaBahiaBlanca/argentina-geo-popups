@@ -8,7 +8,7 @@ export default {
 		"./app/**/*.{ts,tsx}",
 		"./src/**/*.{ts,tsx}",
 		"!./src/components/ui/**/*.{ts,tsx}",
-		"./src/components/ui/{badge,button,card,progress,scroll-area,separator,sonner}.tsx",
+		"./src/components/ui/{accordion,badge,button,card,progress,scroll-area,separator,sonner}.tsx",
 	],
 	prefix: "",
 	theme: {
@@ -93,8 +93,8 @@ export default {
 				}
 			},
 			animation: {
-				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-down': 'accordion-down 0.32s cubic-bezier(0.16, 1, 0.3, 1)',
+				'accordion-up': 'accordion-up 0.32s cubic-bezier(0.16, 1, 0.3, 1)'
 			}
 		}
 	},

@@ -71,6 +71,27 @@ const normalizeUrl = (value: string) => {
   return `https://${trimmed}`;
 };
 
+const getShortLinkLabel = (label: string, href: string, fallback: string) => {
+  if (href.startsWith('mailto:')) return fallback;
+
+  try {
+    const url = new URL(href);
+
+    if (label === 'Web') {
+      return url.hostname.replace(/^www\./, '');
+    }
+
+    if (label === 'Instagram' || label === 'Facebook' || label === 'X') {
+      const handle = url.pathname.split('/').filter(Boolean)[0];
+      return handle ? `@${handle}` : url.hostname.replace(/^www\./, '');
+    }
+
+    return url.hostname.replace(/^www\./, '');
+  } catch {
+    return fallback;
+  }
+};
+
 const provinceProjects: Record<string, Project[]> = {
   'Buenos Aires': [
     {
@@ -510,28 +531,46 @@ const Map = () => {
     }
 
     return (
-      <div key={project.name} className="space-y-2">
+      <div
+        key={project.name}
+        className="rounded-lg border border-slate-200/70 bg-slate-50/40 p-4 space-y-3 leading-relaxed"
+      >
         <h4 className="text-sm font-semibold text-slate-900">{project.name}</h4>
-        <div className="text-sm space-y-1 text-slate-600">
-          {items.map((it) => (
-            <div key={`${project.name}-${it.label}`}>
-              <span className="font-medium text-slate-700">{it.label}: </span>
-              {it.href ? (
+
+        {items.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {items.map((it) => {
+              const display = it.href
+                ? getShortLinkLabel(it.label, it.href, it.value)
+                : it.value;
+              const isMail = !!it.href?.startsWith('mailto:');
+
+              return it.href ? (
                 <a
+                  key={`${project.name}-${it.label}`}
                   href={it.href}
-                  className="inline-flex items-center gap-1 break-words text-emerald-700 underline-offset-4 hover:text-emerald-800 hover:underline"
-                  target={it.href.startsWith('mailto:') ? undefined : '_blank'}
-                  rel={it.href.startsWith('mailto:') ? undefined : 'noreferrer'}
+                  className="group inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 shadow-sm hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2"
+                  target={isMail ? undefined : '_blank'}
+                  rel={isMail ? undefined : 'noreferrer'}
                 >
-                  {it.value}
-                  {!it.href.startsWith('mailto:') && <IconExternalLink className="h-3.5 w-3.5" />}
+                  <span className="text-slate-600">{it.label}</span>
+                  <span className="text-slate-900">{display}</span>
+                  {!isMail && (
+                    <IconExternalLink className="h-3.5 w-3.5 text-slate-500 group-hover:text-emerald-700" />
+                  )}
                 </a>
               ) : (
-                <span className="break-words">{it.value}</span>
-              )}
-            </div>
-          ))}
-        </div>
+                <div
+                  key={`${project.name}-${it.label}`}
+                  className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700"
+                >
+                  <span className="text-slate-600">{it.label}</span>
+                  <span className="text-slate-900 break-words">{display}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     );
   };
@@ -785,7 +824,7 @@ const Map = () => {
                         <Accordion
                           type="single"
                           collapsible
-                          className="w-full"
+                          className="w-full space-y-3"
                         >
                           {visibleProjectCategories.map((category) => (
                             <AccordionItem
@@ -794,16 +833,14 @@ const Map = () => {
                               className="border-0 rounded-lg border border-slate-200/70 bg-white overflow-hidden"
                             >
                               <AccordionTrigger className="px-4 py-3 text-sm font-semibold text-slate-900 bg-slate-50/70 hover:bg-slate-100 hover:no-underline transition-colors data-[state=open]:bg-emerald-50">
-                                <div className="flex items-center gap-2">
+                                <div className="flex min-w-0 items-center gap-2">
                                   <category.Icon className="h-4 w-4 text-emerald-700" aria-hidden="true" />
-                                  <span>{category.title}</span>
-                                  <span className="text-xs text-slate-500">
-                                    ({category.projects.length})
-                                  </span>
+                                  <span className="truncate">{category.title}</span>
+                                  <span className="text-xs text-slate-500">({category.projects.length})</span>
                                 </div>
                               </AccordionTrigger>
                               <AccordionContent>
-                                <div className="space-y-4 border-t border-slate-200/70 bg-white px-4 pt-4">
+                                <div className="space-y-3 border-t border-slate-200/70 bg-white px-4">
                                   {category.projects.map(renderProject)}
                                 </div>
                               </AccordionContent>

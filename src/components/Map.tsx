@@ -122,7 +122,7 @@ const provinceProjects: Record<string, Project[]> = {
     },
     {
       name: 'Nativas de las Sierras (Catamarca y Córdoba)',
-      instagram: 'www.instagram.com/nativas.de.las.sierras',
+      instagram: 'www.instagram.com/flora.serrana',
     },
   ],
   Chubut: [
@@ -138,7 +138,7 @@ const provinceProjects: Record<string, Project[]> = {
     },
     {
       name: 'Nativas de las Sierras (Catamarca y Córdoba)',
-      instagram: 'www.instagram.com/nativas.de.las.sierras',
+      instagram: 'www.instagram.com/flora.serrana',
     },
   ],
   Corrientes: [
@@ -153,11 +153,21 @@ const provinceProjects: Record<string, Project[]> = {
       instagram: 'www.instagram.com/flora.mendocina',
       facebook: 'www.facebook.com/flora.mendocina',
     },
+    {
+      name: 'Nativas Mendocinas',
+      instagram: 'www.instagram.com/floranativamendocina',
+    },
   ],
   Misiones: [
     {
       name: 'Flora Misionera',
       instagram: 'www.instagram.com/floramisionera',
+    },
+  ],
+  'Río Negro': [
+    {
+      name: 'Flora Nativa de Río Negro',
+      instagram: 'www.instagram.com/flora.nativa.rn',
     },
   ],
   Salta: [

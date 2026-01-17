@@ -749,30 +749,47 @@ const Map = () => {
                     />
                   )}
 
-                  {Object.entries(paths).map(([code, pathData]) => (
-                    <path
-                      key={code}
-                      d={pathData}
-                      fill={hoveredProvince === code || selectedProvince === code ? ACTIVE_FILL_COLOR : BASE_FILL_COLOR}
-                      stroke="#ffffff"
-                      strokeWidth={hoveredProvince === code || selectedProvince === code ? "0.25" : "0.15"}
-                      onClick={() => handleProvinceClick(code)}
-                      onMouseEnter={() => setHoveredProvince(code)}
-                      onMouseLeave={() => setHoveredProvince(null)}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          handleProvinceClick(code);
-                        }
-                      }}
-                      aria-label={`Seleccionar provincia ${provinceNameByCode[code] ?? code}`}
-                      aria-pressed={selectedProvince === code}
-                      className="outline-none transition-colors duration-200 focus:outline-none focus-visible:stroke-slate-900 focus-visible:[stroke-width:0.6]"
-                      style={{ cursor: "pointer" }}
-                    />
-                  ))}
+                  {Object.entries(paths).map(([code, pathData]) => {
+                    // Islas Malvinas: sin borde y sin interactividad
+                    if (code === 'ISLASMALVINAS') {
+                      return (
+                        <path
+                          key={code}
+                          d={pathData}
+                          fill={BASE_FILL_COLOR}
+                          stroke="none"
+                          strokeWidth="0"
+                          style={{ pointerEvents: "none" }}
+                        />
+                      );
+                    }
+
+                    // Resto de provincias: interactivas
+                    return (
+                      <path
+                        key={code}
+                        d={pathData}
+                        fill={hoveredProvince === code || selectedProvince === code ? ACTIVE_FILL_COLOR : BASE_FILL_COLOR}
+                        stroke="#ffffff"
+                        strokeWidth={hoveredProvince === code || selectedProvince === code ? "0.25" : "0.15"}
+                        onClick={() => handleProvinceClick(code)}
+                        onMouseEnter={() => setHoveredProvince(code)}
+                        onMouseLeave={() => setHoveredProvince(null)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handleProvinceClick(code);
+                          }
+                        }}
+                        aria-label={`Seleccionar provincia ${provinceNameByCode[code] ?? code}`}
+                        aria-pressed={selectedProvince === code}
+                        className="outline-none transition-colors duration-200 focus:outline-none focus-visible:stroke-slate-900 focus-visible:[stroke-width:0.6]"
+                        style={{ cursor: "pointer" }}
+                      />
+                    );
+                  })}
                 </svg>
               </div>
             )}

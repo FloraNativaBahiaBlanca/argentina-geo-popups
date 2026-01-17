@@ -251,11 +251,12 @@ const provinces: Province[] = [
   { name: 'Catamarca', description: 'Tierra de antiguos pueblos y paisajes lunares.', code: 'CATAMARCA' },
   { name: 'La Rioja', description: 'Provincia de parques naturales y viñedos.', code: 'LARIOJA' },
   { name: 'Santa Cruz', description: 'Hogar del Glaciar Perito Moreno.', code: 'SANTACRUZ' },
-  { name: 'Tierra del Fuego', description: 'El fin del mundo, punto más austral de Argentina.', code: 'TIERRADELFUEGO' }
+  { name: 'Tierra del Fuego', description: 'El fin del mundo, punto más austral de Argentina.', code: 'TIERRADELFUEGO' },
+  { name: 'Islas Malvinas', description: 'Archipiélago del Atlántico Sur, parte integral del territorio argentino.', code: 'ISLASMALVINAS' }
 ];
 
-// URL para los datos GeoJSON
-const baseGeoJSONUrl = 'https://raw.githubusercontent.com/alvarezgarcia/provincias-argentinas-geojson/refs/heads/master/';
+// URL para los datos GeoJSON (ahora locales)
+const baseGeoJSONUrl = '/geojson/';
 
 const BASE_FILL_COLOR = '#68d070';
 const ACTIVE_FILL_COLOR = '#55b85f';
@@ -331,7 +332,7 @@ const Map = () => {
   }, [projectCategories]);
 
   const selectedTitle = countryOpen ? 'Argentina' : selectedProvinceName;
-  
+
   // Cargar los datos GeoJSON de las provincias
   useEffect(() => {
     const fetchProvinceData = async () => {
@@ -340,28 +341,28 @@ const Map = () => {
         setError(null);
         setLoadedProvinces([]);
         setFailedProvinces([]);
-        
+
         const provData: Record<string, any> = {};
         let errorCount = 0;
         const loaded: string[] = [];
         const failed: string[] = [];
-        
+
         // Calcular progreso
         const totalProvinces = provinces.length;
         let completedCount = 0;
-        
+
         // Cargar cada provincia por separado
         for (const province of provinces) {
           try {
             const url = `${baseGeoJSONUrl}${province.code}.json`;
             console.log(`Intentando cargar: ${province.name} desde ${url}`);
-            
+
             const response = await fetch(url, { cache: 'no-store' });
-            
+
             if (!response.ok) {
               throw new Error(`Error al cargar ${province.name}: ${response.status}`);
             }
-            
+
             const data = await response.json();
             provData[province.code] = data;
             loaded.push(province.code);
@@ -377,11 +378,11 @@ const Map = () => {
             setLoadingProgress(progress);
           }
         }
-        
+
         setProvincesData(provData);
         setLoadedProvinces(loaded);
         setFailedProvinces(failed);
-        
+
         if (errorCount === provinces.length) {
           throw new Error("No se pudo cargar ninguna provincia");
         } else if (errorCount > 0) {
@@ -391,7 +392,7 @@ const Map = () => {
             .join(", ");
           toast.warning(`No se pudieron cargar ${errorCount} provincias: ${failedNames}`);
         }
-        
+
         processGeoJSONData(provData);
         setLoading(false);
       } catch (error) {
@@ -400,7 +401,7 @@ const Map = () => {
         setLoading(false);
       }
     };
-    
+
     fetchProvinceData();
   }, []);
 
@@ -408,10 +409,10 @@ const Map = () => {
   const processGeoJSONData = (data: Record<string, any>) => {
     try {
       if (Object.keys(data).length === 0) return;
-      
+
       // Crear un objeto para almacenar los paths de cada provincia
       const svgPaths: { [key: string]: string } = {};
-      
+
       // Encontrar los límites del mapa completo
       let minX = Infinity;
       let minY = Infinity;
@@ -423,14 +424,14 @@ const Map = () => {
       let santaMinY = Infinity;
       let santaMaxX = -Infinity;
       let santaMaxY = -Infinity;
-      
+
       Object.entries(data).forEach(([code, geoData]) => {
         if (!geoData || !geoData.features) return;
-        
+
         geoData.features.forEach((feature: any) => {
           if (feature.geometry && feature.geometry.coordinates) {
             const { geometry } = feature;
-            
+
             // Procesar diferentes tipos de geometrías
             if (geometry.type === 'Polygon') {
               // Manejar polígonos individuales
@@ -449,11 +450,11 @@ const Map = () => {
                   }
                   return `${coord[0]},${coord[1]}`;
                 });
-                
+
                 const pathStr = `M ${pathPoints.join(' L ')} Z`;
                 svgPaths[code] = (svgPaths[code] || '') + pathStr;
               });
-            } 
+            }
             else if (geometry.type === 'MultiPolygon') {
               // Manejar multipolígonos (colecciones de polígonos)
               geometry.coordinates.forEach((polygon: number[][][]) => {
@@ -472,7 +473,7 @@ const Map = () => {
                     }
                     return `${coord[0]},${coord[1]}`;
                   });
-                  
+
                   const pathStr = `M ${pathPoints.join(' L ')} Z`;
                   svgPaths[code] = (svgPaths[code] || '') + pathStr;
                 });
@@ -481,7 +482,7 @@ const Map = () => {
           }
         });
       });
-      
+
       // Establecer el viewBox del SVG basado en los límites encontrados
       const width = maxX - minX;
       const height = maxY - minY;
@@ -497,7 +498,7 @@ const Map = () => {
           y: (santaMinY + santaMaxY) / 2,
         });
       }
-      
+
       setPaths(svgPaths);
     } catch (error) {
       console.error("Error al procesar los datos GeoJSON:", error);
@@ -588,25 +589,25 @@ const Map = () => {
   // Función para intentar volver a cargar las provincias fallidas
   const retryFailedProvinces = async () => {
     if (failedProvinces.length === 0) return;
-    
+
     try {
       setLoading(true);
       const newProvData = { ...provincesData };
       const stillFailed: string[] = [];
       let reloadedCount = 0;
-      
+
       for (const code of failedProvinces) {
         try {
           const province = provinces.find(p => p.code === code);
           if (!province) continue;
-          
+
           const url = `${baseGeoJSONUrl}${code}.json`;
           const response = await fetch(url, { cache: 'no-store' });
-          
+
           if (!response.ok) {
             throw new Error(`Error al cargar ${province.name}: ${response.status}`);
           }
-          
+
           const data = await response.json();
           newProvData[code] = data;
           reloadedCount++;
@@ -614,7 +615,7 @@ const Map = () => {
           stillFailed.push(code);
         }
       }
-      
+
       if (reloadedCount > 0) {
         setProvincesData(newProvData);
         processGeoJSONData(newProvData);
@@ -675,119 +676,119 @@ const Map = () => {
           </div>
 
           <div className="relative h-[62vh] min-h-[520px] w-full overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-sm">
-        {loading && (
-          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-50">
-            <p className="mb-3 text-sm font-medium text-slate-700">Cargando mapa...</p>
-            <Progress value={loadingProgress} className="w-64 h-2" />
-            <p className="mt-2 text-xs text-slate-500">{loadingProgress}%</p>
-          </div>
-        )}
-        
-        {error && Object.keys(provincesData).length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full bg-gray-100 p-4">
-            <p className="text-red-500 text-center mb-2">{error}</p>
-            <p className="text-sm text-gray-600 text-center">
-              Verifica tu conexión a Internet o utiliza una URL alternativa.
-            </p>
-          </div>
-        )}
-        
-        {Object.keys(paths).length > 0 && (
-          <div className="relative h-full w-full">
-            <svg
-              viewBox={viewBox}
-              className="h-full w-full"
-              preserveAspectRatio="xMidYMid meet"
-              style={{ transform: "scale(1, -1)" }}
-            >
-              {mapBounds && (
-                <circle
-                  cx={Math.max(
-                    mapBounds.maxX + mapBounds.width * 0.015,
-                    Math.min(
-                      mapBounds.maxX + mapBounds.width * 0.045,
-                      (santaCruzCenter?.x ?? mapBounds.maxX) + mapBounds.width * 0.12
-                    )
-                  )}
-                  cy={Math.max(
-                    mapBounds.minY + mapBounds.height * 0.01,
-                    Math.min(
-                      mapBounds.maxY - mapBounds.height * 0.01,
-                      (santaCruzCenter?.y ?? mapBounds.minY) - mapBounds.height * 0.08
-                    )
-                  )}
-                  r={2}
-                  fill={(countryOpen || countryHovered) ? ACTIVE_FILL_COLOR : BASE_FILL_COLOR}
-                  stroke="#ffffff"
-                  strokeWidth={0.25}
-                  onMouseEnter={() => setCountryHovered(true)}
-                  onMouseLeave={() => setCountryHovered(false)}
-                  onClick={() => {
-                    setCountryOpen((prev) => {
-                      const next = !prev;
-                      if (next) setSelectedProvince(null);
-                      return next;
-                    });
-                  }}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      setCountryOpen((prev) => {
-                        const next = !prev;
-                        if (next) setSelectedProvince(null);
-                        return next;
-                      });
-                    }
-                  }}
-                  aria-label="Ver información general de Argentina"
-                  aria-pressed={countryOpen}
-                  className="outline-none focus:outline-none focus-visible:stroke-slate-900 focus-visible:[stroke-width:0.6]"
-                  style={{ cursor: 'pointer' }}
-                />
-              )}
+            {loading && (
+              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-50">
+                <p className="mb-3 text-sm font-medium text-slate-700">Cargando mapa...</p>
+                <Progress value={loadingProgress} className="w-64 h-2" />
+                <p className="mt-2 text-xs text-slate-500">{loadingProgress}%</p>
+              </div>
+            )}
 
-              {Object.entries(paths).map(([code, pathData]) => (
-                <path
-                  key={code}
-                  d={pathData}
-                  fill={hoveredProvince === code || selectedProvince === code ? ACTIVE_FILL_COLOR : BASE_FILL_COLOR}
-                  stroke="#ffffff"
-                  strokeWidth={hoveredProvince === code || selectedProvince === code ? "0.25" : "0.15"}
-                  onClick={() => handleProvinceClick(code)}
-                  onMouseEnter={() => setHoveredProvince(code)}
-                  onMouseLeave={() => setHoveredProvince(null)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      handleProvinceClick(code);
-                    }
-                  }}
-                  aria-label={`Seleccionar provincia ${provinceNameByCode[code] ?? code}`}
-                  aria-pressed={selectedProvince === code}
-                  className="outline-none transition-colors duration-200 focus:outline-none focus-visible:stroke-slate-900 focus-visible:[stroke-width:0.6]"
-                  style={{ cursor: "pointer" }}
-                />
-              ))}
-            </svg>
-          </div>
-        )}
-        
-        {failedProvinces.length > 0 && !loading && (
-          <div className="absolute bottom-4 right-4">
-            <Button
-              onClick={retryFailedProvinces}
-              variant="outline"
-              size="sm"
-              className="bg-white"
-            >
-              Recargar provincias ({failedProvinces.length})
-            </Button>
-          </div>
-        )}
+            {error && Object.keys(provincesData).length === 0 && (
+              <div className="flex flex-col items-center justify-center h-full bg-gray-100 p-4">
+                <p className="text-red-500 text-center mb-2">{error}</p>
+                <p className="text-sm text-gray-600 text-center">
+                  Verifica tu conexión a Internet o utiliza una URL alternativa.
+                </p>
+              </div>
+            )}
+
+            {Object.keys(paths).length > 0 && (
+              <div className="relative h-full w-full">
+                <svg
+                  viewBox={viewBox}
+                  className="h-full w-full"
+                  preserveAspectRatio="xMidYMid meet"
+                  style={{ transform: "scale(1, -1)" }}
+                >
+                  {mapBounds && (
+                    <circle
+                      cx={Math.max(
+                        mapBounds.maxX + mapBounds.width * 0.015,
+                        Math.min(
+                          mapBounds.maxX + mapBounds.width * 0.045,
+                          (santaCruzCenter?.x ?? mapBounds.maxX) + mapBounds.width * 0.12
+                        )
+                      )}
+                      cy={Math.max(
+                        mapBounds.minY + mapBounds.height * 0.01,
+                        Math.min(
+                          mapBounds.maxY - mapBounds.height * 0.01,
+                          (santaCruzCenter?.y ?? mapBounds.minY) - mapBounds.height * 0.08
+                        )
+                      )}
+                      r={2}
+                      fill={(countryOpen || countryHovered) ? ACTIVE_FILL_COLOR : BASE_FILL_COLOR}
+                      stroke="#ffffff"
+                      strokeWidth={0.25}
+                      onMouseEnter={() => setCountryHovered(true)}
+                      onMouseLeave={() => setCountryHovered(false)}
+                      onClick={() => {
+                        setCountryOpen((prev) => {
+                          const next = !prev;
+                          if (next) setSelectedProvince(null);
+                          return next;
+                        });
+                      }}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setCountryOpen((prev) => {
+                            const next = !prev;
+                            if (next) setSelectedProvince(null);
+                            return next;
+                          });
+                        }
+                      }}
+                      aria-label="Ver información general de Argentina"
+                      aria-pressed={countryOpen}
+                      className="outline-none focus:outline-none focus-visible:stroke-slate-900 focus-visible:[stroke-width:0.6]"
+                      style={{ cursor: 'pointer' }}
+                    />
+                  )}
+
+                  {Object.entries(paths).map(([code, pathData]) => (
+                    <path
+                      key={code}
+                      d={pathData}
+                      fill={hoveredProvince === code || selectedProvince === code ? ACTIVE_FILL_COLOR : BASE_FILL_COLOR}
+                      stroke="#ffffff"
+                      strokeWidth={hoveredProvince === code || selectedProvince === code ? "0.25" : "0.15"}
+                      onClick={() => handleProvinceClick(code)}
+                      onMouseEnter={() => setHoveredProvince(code)}
+                      onMouseLeave={() => setHoveredProvince(null)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          handleProvinceClick(code);
+                        }
+                      }}
+                      aria-label={`Seleccionar provincia ${provinceNameByCode[code] ?? code}`}
+                      aria-pressed={selectedProvince === code}
+                      className="outline-none transition-colors duration-200 focus:outline-none focus-visible:stroke-slate-900 focus-visible:[stroke-width:0.6]"
+                      style={{ cursor: "pointer" }}
+                    />
+                  ))}
+                </svg>
+              </div>
+            )}
+
+            {failedProvinces.length > 0 && !loading && (
+              <div className="absolute bottom-4 right-4">
+                <Button
+                  onClick={retryFailedProvinces}
+                  variant="outline"
+                  size="sm"
+                  className="bg-white"
+                >
+                  Recargar provincias ({failedProvinces.length})
+                </Button>
+              </div>
+            )}
           </div>
         </div>
 

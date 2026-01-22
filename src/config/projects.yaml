@@ -49,6 +49,12 @@ provincial:
       facebook: "www.facebook.com/plantaycanta"
       contacto: "afrostudio@hotmail.com"
 
+  "Ciudad Autónoma de Buenos Aires":
+    - name: "Jardín Botánico de la Universidad CAECE"
+      category: "educativos-institucionales"
+      instagram: "www.instagram.com/ucaece"
+      web: "https://www.ucaece.edu.ar/es/blog_de_botanica"
+
   "Catamarca":
     - name: "Flora Catamarqueña"
       category: "divulgacion-general"

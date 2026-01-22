@@ -110,7 +110,8 @@ const provinces: Province[] = [
   { name: 'La Rioja', description: 'Provincia de parques naturales y viñedos.', code: 'LARIOJA' },
   { name: 'Santa Cruz', description: 'Hogar del Glaciar Perito Moreno.', code: 'SANTACRUZ' },
   { name: 'Tierra del Fuego', description: 'El fin del mundo, punto más austral de Argentina.', code: 'TIERRADELFUEGO' },
-  { name: 'Islas Malvinas', description: 'Archipiélago del Atlántico Sur, parte integral del territorio argentino.', code: 'ISLASMALVINAS' }
+  { name: 'Islas Malvinas', description: 'Archipiélago del Atlántico Sur, parte integral del territorio argentino.', code: 'ISLASMALVINAS' },
+  { name: 'Ciudad Autónoma de Buenos Aires', description: 'Capital Federal de la República Argentina.', code: 'CABA' }
 ];
 
 // URL para los datos GeoJSON (ahora locales)
@@ -140,6 +141,8 @@ const Map = () => {
     height: number;
   } | null>(null);
   const [santaCruzCenter, setSantaCruzCenter] = useState<{ x: number; y: number } | null>(null);
+  const [cabaRealCenter, setCabaRealCenter] = useState<{ x: number; y: number } | null>(null);
+  const [cabaInsetCenter, setCabaInsetCenter] = useState<{ x: number; y: number } | null>(null);
   const [countryHovered, setCountryHovered] = useState(false);
 
   const provinceNameByCode = useMemo(() => {
@@ -286,6 +289,101 @@ const Map = () => {
       Object.entries(data).forEach(([code, geoData]) => {
         if (!geoData || !geoData.features) return;
 
+        // Processing for CABA - Special handling for inset
+        if (code === 'CABA') {
+          // 1. Calculate centroid and bounds of original CABA
+          let cabaMinX = Infinity;
+          let cabaMinY = Infinity;
+          let cabaMaxX = -Infinity;
+          let cabaMaxY = -Infinity;
+
+          // Helper to process CABA points first to find bounds
+          const processCabaBounds = (points: number[][]) => {
+            points.forEach(p => {
+              cabaMinX = Math.min(cabaMinX, p[0]);
+              cabaMinY = Math.min(cabaMinY, p[1]);
+              cabaMaxX = Math.max(cabaMaxX, p[0]);
+              cabaMaxY = Math.max(cabaMaxY, p[1]);
+            });
+          };
+
+          geoData.features.forEach((feature: any) => {
+            if (feature.geometry && feature.geometry.coordinates) {
+              if (feature.geometry.type === 'Polygon') {
+                feature.geometry.coordinates.forEach((ring: number[][]) => processCabaBounds(ring));
+              } else if (feature.geometry.type === 'MultiPolygon') {
+                feature.geometry.coordinates.forEach((poly: number[][][]) => {
+                  poly.forEach((ring: number[][]) => processCabaBounds(ring));
+                });
+              }
+            }
+          });
+
+          // Define transformation parameters
+          if (cabaMinX === Infinity) return;
+
+          const realCenterX = (cabaMinX + cabaMaxX) / 2;
+          const realCenterY = (cabaMinY + cabaMaxY) / 2;
+
+          const SCALE = 10;
+          const OFFSET_X = 3.0; // Shift East (degrees)
+          const OFFSET_Y = 1.0; // Shift North (degrees)
+
+          const insetCenterX = realCenterX + OFFSET_X;
+          const insetCenterY = realCenterY + OFFSET_Y;
+
+          // Save center points for the connector line
+          setCabaRealCenter({ x: realCenterX, y: realCenterY });
+          setCabaInsetCenter({ x: insetCenterX, y: insetCenterY });
+
+          // Helper to transform points
+          const transformPoint = (p: number[]) => {
+            const x = p[0];
+            const y = p[1];
+
+            // Scale from original center
+            const scaledX = (x - realCenterX) * SCALE;
+            const scaledY = (y - realCenterY) * SCALE;
+
+            // Translate to new position
+            const finalX = scaledX + insetCenterX;
+            const finalY = scaledY + insetCenterY;
+
+            // Update global map bounds to include the inset
+            minX = Math.min(minX, finalX);
+            minY = Math.min(minY, finalY);
+            maxX = Math.max(maxX, finalX);
+            maxY = Math.max(maxY, finalY);
+
+            return `${finalX},${finalY}`;
+          };
+
+          // Generate transformed path
+          geoData.features.forEach((feature: any) => {
+            if (feature.geometry && feature.geometry.coordinates) {
+              const { geometry } = feature;
+
+              if (geometry.type === 'Polygon') {
+                geometry.coordinates.forEach((ring: number[][]) => {
+                  const pathPoints = ring.map(transformPoint);
+                  const pathStr = `M ${pathPoints.join(' L ')} Z`;
+                  svgPaths[code] = (svgPaths[code] || '') + pathStr;
+                });
+              } else if (geometry.type === 'MultiPolygon') {
+                geometry.coordinates.forEach((polygon: number[][][]) => {
+                  polygon.forEach((ring: number[][]) => {
+                    const pathPoints = ring.map(transformPoint);
+                    const pathStr = `M ${pathPoints.join(' L ')} Z`;
+                    svgPaths[code] = (svgPaths[code] || '') + pathStr;
+                  });
+                });
+              }
+            }
+          });
+          return;
+        }
+
+        // Standard processing for other provinces
         geoData.features.forEach((feature: any) => {
           if (feature.geometry && feature.geometry.coordinates) {
             const { geometry } = feature;
@@ -619,47 +717,80 @@ const Map = () => {
                     />
                   )}
 
-                  {Object.entries(paths).map(([code, pathData]) => {
-                    // Islas Malvinas: sin borde y sin interactividad
-                    if (code === 'ISLASMALVINAS') {
+                  {/* Línea conectora para CABA Inset */}
+                  {cabaRealCenter && cabaInsetCenter && (
+                    <g style={{ pointerEvents: 'none' }}>
+                      {/* Línea principal */}
+                      <line
+                        x1={cabaRealCenter.x}
+                        y1={cabaRealCenter.y}
+                        x2={cabaInsetCenter.x * 0.85 + cabaRealCenter.x * 0.15} // No llegar hasta el centro mismo para que no quede encima
+                        y2={cabaInsetCenter.y * 0.85 + cabaRealCenter.y * 0.15}
+                        stroke="#64748b"
+                        strokeWidth="0.1"
+                        strokeDasharray="0.3, 0.3"
+                      />
+                      {/* Círculo en la ubicación real */}
+                      <circle
+                        cx={cabaRealCenter.x}
+                        cy={cabaRealCenter.y}
+                        r={0.15}
+                        fill="#64748b"
+                      />
+                    </g>
+                  )}
+
+                  {Object.entries(paths)
+                    .sort(([codeA], [codeB]) => {
+                      if (codeA === 'CABA') return 1;
+                      if (codeB === 'CABA') return -1;
+                      return 0;
+                    })
+                    .map(([code, pathData]) => {
+                      // Islas Malvinas: sin borde y sin interactividad
+                      if (code === 'ISLASMALVINAS') {
+                        return (
+                          <path
+                            key={code}
+                            d={pathData}
+                            fill={BASE_FILL_COLOR}
+                            stroke="none"
+                            strokeWidth="0"
+                            style={{ pointerEvents: "none" }}
+                          />
+                        );
+                      }
+
+                      // Resto de provincias: interactivas
                       return (
                         <path
                           key={code}
                           d={pathData}
-                          fill={BASE_FILL_COLOR}
-                          stroke="none"
-                          strokeWidth="0"
-                          style={{ pointerEvents: "none" }}
+                          fill={hoveredProvince === code || selectedProvince === code ? ACTIVE_FILL_COLOR : BASE_FILL_COLOR}
+                          stroke="#ffffff"
+                          strokeWidth={
+                            hoveredProvince === code || selectedProvince === code
+                              ? (code === 'CABA' ? "0.08" : "0.25")
+                              : (code === 'CABA' ? "0.04" : "0.15")
+                          }
+                          onClick={() => handleProvinceClick(code)}
+                          onMouseEnter={() => setHoveredProvince(code)}
+                          onMouseLeave={() => setHoveredProvince(null)}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              handleProvinceClick(code);
+                            }
+                          }}
+                          aria-label={`Seleccionar provincia ${provinceNameByCode[code] ?? code}`}
+                          aria-pressed={selectedProvince === code}
+                          className="outline-none transition-colors duration-200 focus:outline-none focus-visible:stroke-slate-900 focus-visible:[stroke-width:0.6]"
+                          style={{ cursor: "pointer" }}
                         />
                       );
-                    }
-
-                    // Resto de provincias: interactivas
-                    return (
-                      <path
-                        key={code}
-                        d={pathData}
-                        fill={hoveredProvince === code || selectedProvince === code ? ACTIVE_FILL_COLOR : BASE_FILL_COLOR}
-                        stroke="#ffffff"
-                        strokeWidth={hoveredProvince === code || selectedProvince === code ? "0.25" : "0.15"}
-                        onClick={() => handleProvinceClick(code)}
-                        onMouseEnter={() => setHoveredProvince(code)}
-                        onMouseLeave={() => setHoveredProvince(null)}
-                        role="button"
-                        tabIndex={0}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            handleProvinceClick(code);
-                          }
-                        }}
-                        aria-label={`Seleccionar provincia ${provinceNameByCode[code] ?? code}`}
-                        aria-pressed={selectedProvince === code}
-                        className="outline-none transition-colors duration-200 focus:outline-none focus-visible:stroke-slate-900 focus-visible:[stroke-width:0.6]"
-                        style={{ cursor: "pointer" }}
-                      />
-                    );
-                  })}
+                    })}
                 </svg>
               </div>
             )}

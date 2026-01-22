@@ -37,6 +37,17 @@ provincial:
       facebook: "www.facebook.com/floranativabb"
       web: "https://floranativabb.com.ar"
       contacto: "floranativabb@gmail.com"
+    
+    - name: "Nativas de Del Viso (Pilar)"
+      category: "divulgacion-general"
+      instagram: "www.instagram.com/nativasdelvisopilar"
+      facebook: "www.facebook.com/nativasdelviso"
+
+    - name: "Planta y Canta (Lanús)"
+      category: "educativos-institucionales"
+      instagram: "www.instagram.com/plantaycanta"
+      facebook: "www.facebook.com/plantaycanta"
+      contacto: "afrostudio@hotmail.com"
 
   "Catamarca":
     - name: "Flora Catamarqueña"
@@ -65,6 +76,11 @@ provincial:
     - name: "Nativas de Corrientes"
       category: "divulgacion-general"
       instagram: "www.instagram.com/nativasdecorrientes_arg"
+  
+  "La Pampa":
+    - name: "Senderos interpretativos de flora autóctona \"Paseo de Las Tunas\" y \"Los Caldenes\" (Guatraché)"
+      category: "restauracion-conservacion"
+      telefono: "+54 9 11 3158-3447"
 
   "Mendoza":
     - name: "Flora Mendocina"
@@ -75,6 +91,12 @@ provincial:
     - name: "Nativas Mendocinas"
       category: "divulgacion-general"
       instagram: "www.instagram.com/floranativamendocina"
+
+    - name: "Suma Nativas (Potrerillos)"
+      category: "restauracion-conservacion"
+      instagram: "www.instagram.com/sumanativas"
+      facebook: "www.facebook.com/sumanativas"
+      web: "https://sumanativas.wordpress.com"
 
   "Misiones":
     - name: "Flora Misionera"
@@ -99,6 +121,17 @@ provincial:
     - name: "Nativas de San Luis"
       category: "divulgacion-general"
       instagram: "www.instagram.com/nativasdesanluis"
+
+  "Santa Cruz":
+    - name: "Fundación ANFIBIA (El Chaltén)"
+      category: "restauracion-conservacion"
+      instagram: "www.instagram.com/fundacionanfibia"
+      facebook: "www.facebook.com/SoyAnfibiaChalten"
+
+  "Santa Fe":
+    - name: "Proyecto escolar \"Sueños bajo chañares\" (Chañar Ladeado)"
+      category: "educativos-institucionales"
+      instagram: "www.instagram.com/escuelasanmartin213"
 
   "Santiago del Estero":
     - name: "Nativas de Santiago del Estero"
@@ -134,3 +167,14 @@ national:
     x: "https://x.com/sabotanica"
     facebook: "www.facebook.com/sabotanica"
     web: "https://botanicaargentina.org.ar"
+
+  - name: "Flora Vascular Argentina (Instituto Darwinion)"
+    category: "divulgacion-general"
+    instagram: "www.instagram.com/instituto_darwinion"
+    web: "http://www.floraargentina.edu.ar"
+
+  - name: "Me UNO al monte (juego de cartas de flora y fauna argentina)"
+    category: "educativos-institucionales"
+    instagram: "www.instagram.com/meunoalmonte"
+    web: "https://www.meunoalmonte.com"
+    contacto: "meunoalmonte@gmail.com"

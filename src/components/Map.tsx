@@ -65,7 +65,7 @@ const normalizeUrl = (value: string) => {
 };
 
 const getShortLinkLabel = (label: string, href: string, fallback: string) => {
-  if (href.startsWith('mailto:')) return fallback;
+  if (href.startsWith('mailto:') || href.startsWith('tel:')) return fallback;
 
   try {
     const url = new URL(href);
@@ -398,6 +398,9 @@ const Map = () => {
     if (project.contacto) {
       items.push({ label: 'Contacto', value: project.contacto, href: `mailto:${project.contacto}` });
     }
+    if (project.telefono) {
+      items.push({ label: 'Teléfono', value: project.telefono, href: `tel:${project.telefono}` });
+    }
 
     return (
       <div
@@ -412,19 +415,19 @@ const Map = () => {
               const display = it.href
                 ? getShortLinkLabel(it.label, it.href, it.value)
                 : it.value;
-              const isMail = !!it.href?.startsWith('mailto:');
+              const isMailOrTel = !!it.href?.startsWith('mailto:') || !!it.href?.startsWith('tel:');
 
               return it.href ? (
                 <a
                   key={`${project.name}-${it.label}`}
                   href={it.href}
                   className="group inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 shadow-sm hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2"
-                  target={isMail ? undefined : '_blank'}
-                  rel={isMail ? undefined : 'noreferrer'}
+                  target={isMailOrTel ? undefined : '_blank'}
+                  rel={isMailOrTel ? undefined : 'noreferrer'}
                 >
                   <span className="text-slate-600">{it.label}</span>
                   <span className="text-slate-900">{display}</span>
-                  {!isMail && (
+                  {!isMailOrTel && (
                     <IconExternalLink className="h-3.5 w-3.5 text-slate-500 group-hover:text-emerald-700" />
                   )}
                 </a>

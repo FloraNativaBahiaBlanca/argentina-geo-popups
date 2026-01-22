@@ -40,6 +40,9 @@ export interface Project {
     /** Contact email address */
     contacto?: string;
 
+    /** Phone number */
+    telefono?: string;
+
     /** YouTube channel URL (example of extensibility) */
     youtube?: string;
 

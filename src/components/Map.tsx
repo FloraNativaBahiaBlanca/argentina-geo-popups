@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Leaf, Sprout, University } from "lucide-react";
+import { provinceProjects, argentinaProjects } from '@/config/projectsConfig';
+import type { Project } from '@/types/projects';
 
 const IconExternalLink = ({ className, ...props }: SVGProps<SVGSVGElement>) => (
   <svg
@@ -55,15 +57,6 @@ interface Province {
   code: string;
 }
 
-interface Project {
-  name: string;
-  instagram?: string;
-  x?: string;
-  facebook?: string;
-  web?: string;
-  contacto?: string;
-}
-
 const normalizeUrl = (value: string) => {
   const trimmed = value.trim();
   if (!trimmed) return trimmed;
@@ -91,141 +84,6 @@ const getShortLinkLabel = (label: string, href: string, fallback: string) => {
     return fallback;
   }
 };
-
-const provinceProjects: Record<string, Project[]> = {
-  'Buenos Aires': [
-    {
-      name: 'Nativas bonaerenses',
-      instagram: 'www.instagram.com/nativas.bonaerenses',
-      contacto: 'nativasbonaerensess@gmail.com',
-    },
-    {
-      name: 'Flora del Sistema de Tandilia',
-      instagram: 'www.instagram.com/flora.tandilia',
-    },
-    {
-      name: 'Flora de Punta Alta',
-      instagram: 'www.instagram.com/flora.de.punta.alta',
-    },
-    {
-      name: 'Flora Nativa Bahía Blanca',
-      instagram: 'www.instagram.com/floranativabb',
-      facebook: 'www.facebook.com/floranativabb',
-      web: 'https://floranativabb.com.ar',
-      contacto: 'floranativabb@gmail.com',
-    },
-  ],
-  Catamarca: [
-    {
-      name: 'Flora Catamarqueña',
-      instagram: 'www.instagram.com/floracatamarquena',
-    },
-    {
-      name: 'Nativas de las Sierras (Catamarca y Córdoba)',
-      instagram: 'www.instagram.com/flora.serrana',
-    },
-  ],
-  Chubut: [
-    {
-      name: 'Nativas de Chubut',
-      instagram: 'www.instagram.com/nativas.chubut',
-    },
-  ],
-  Córdoba: [
-    {
-      name: 'Nativas de Córdoba',
-      instagram: 'www.instagram.com/nativascordoba',
-    },
-    {
-      name: 'Nativas de las Sierras (Catamarca y Córdoba)',
-      instagram: 'www.instagram.com/flora.serrana',
-    },
-  ],
-  Corrientes: [
-    {
-      name: 'Nativas de Corrientes',
-      instagram: 'www.instagram.com/nativasdecorrientes_arg',
-    },
-  ],
-  Mendoza: [
-    {
-      name: 'Flora Mendocina',
-      instagram: 'www.instagram.com/flora.mendocina',
-      facebook: 'www.facebook.com/flora.mendocina',
-    },
-    {
-      name: 'Nativas Mendocinas',
-      instagram: 'www.instagram.com/floranativamendocina',
-    },
-  ],
-  Misiones: [
-    {
-      name: 'Flora Misionera',
-      instagram: 'www.instagram.com/floramisionera',
-    },
-  ],
-  'Río Negro': [
-    {
-      name: 'Flora Nativa de Río Negro',
-      instagram: 'www.instagram.com/flora.nativa.rn',
-    },
-  ],
-  Salta: [
-    {
-      name: 'Nativas de Salta',
-      instagram: 'www.instagram.com/nativasdesalta',
-    },
-    {
-      name: 'Nativas salteñas',
-      instagram: 'www.instagram.com/saltanativas',
-    },
-  ],
-  'San Luis': [
-    {
-      name: 'Nativas de San Luis',
-      instagram: 'www.instagram.com/nativasdesanluis',
-    },
-  ],
-  'Santiago del Estero': [
-    {
-      name: 'Nativas de Santiago del Estero',
-      instagram: 'www.instagram.com/nativas_santiagodelestero',
-    },
-  ],
-  'Tierra del Fuego': [
-    {
-      name: 'Flora de Tierra del Fuego',
-      instagram: 'www.instagram.com/flora.de.tierradelfuego',
-      facebook: 'www.facebook.com/floratdf',
-    },
-  ],
-  Tucumán: [
-    {
-      name: 'Nativas tucumanas',
-      instagram: 'www.instagram.com/nativastucumanas',
-    },
-    {
-      name: 'Fundación Forestar',
-      instagram: 'www.instagram.com/fundacionforestar',
-    },
-  ],
-};
-
-const argentinaProjects: Project[] = [
-  {
-    name: 'Helechos y Licófitas de Argentina',
-    instagram: 'www.instagram.com/helechosylicofitasdeargentina',
-    x: 'https://x.com/helechylicofarg',
-    contacto: 'helechosylicofitasdeargentina@gmail.com',
-  },
-  {
-    name: 'Sociedad Argentina de Botánica',
-    instagram: 'www.instagram.com/socargbot',
-    x: 'https://x.com/sabotanica',
-    facebook: 'www.facebook.com/sabotanica',
-    web: 'https://botanicaargentina.org.ar',
-  },
-];
 
 // Mantenemos el array de provincias con información
 const provinces: Province[] = [

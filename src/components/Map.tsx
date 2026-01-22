@@ -504,14 +504,23 @@ const Map = () => {
           Al hacer clic sobre cada provincia, podrás conocer iniciativas que promueven la educación ambiental y la preservación de nuestra biodiversidad. ¡Te invitamos a explorarlos, apoyarlos y compartirlos!
         </p>
         <p className="max-w-3xl text-sm leading-relaxed text-slate-600 md:text-base">
-          Si conocés o formás parte de un proyecto que te gustaría incluir en este mapa,{' '}
+          Para más información visita{' '}
+          <a
+            href="https://blog.floranativabb.com.ar/mapa-interactivo/"
+            className="text-emerald-700 underline-offset-4 hover:text-emerald-800 hover:underline"
+            target="_blank"
+            rel="noreferrer"
+          >
+            este artículo
+          </a>{' '}
+          en nuestro blog. Si conocés o formás parte de un proyecto que te gustaría incluir en este mapa, completa{' '}
           <a
             href="https://floranativabb.com.ar/contacto/"
             className="text-emerald-700 underline-offset-4 hover:text-emerald-800 hover:underline"
             target="_blank"
             rel="noreferrer"
           >
-            contactanos
+            este formulario
           </a>
           .
         </p>

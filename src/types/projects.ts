@@ -7,12 +7,23 @@
  */
 
 /**
+ * Project categories for grouping in the UI
+ */
+export type ProjectCategory =
+    | 'divulgacion-general'
+    | 'educativos-institucionales'
+    | 'restauracion-conservacion';
+
+/**
  * Supported social networks and contact methods
  * Add new platforms here as needed
  */
 export interface Project {
     /** Display name of the project */
     name: string;
+
+    /** Category for UI grouping (defaults to 'divulgacion-general' if not specified) */
+    category?: ProjectCategory;
 
     /** Instagram profile URL or handle */
     instagram?: string;

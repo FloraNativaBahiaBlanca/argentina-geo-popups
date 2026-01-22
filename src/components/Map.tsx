@@ -168,19 +168,19 @@ const Map = () => {
         id: 'divulgacion-general',
         title: 'Divulgación general',
         Icon: Leaf,
-        projects,
+        projects: projects.filter(p => !p.category || p.category === 'divulgacion-general'),
       },
       {
         id: 'educativos-institucionales',
         title: 'Educativos/Institucionales',
         Icon: University,
-        projects: [],
+        projects: projects.filter(p => p.category === 'educativos-institucionales'),
       },
       {
         id: 'restauracion-conservacion',
         title: 'Restauración y conservación',
         Icon: Sprout,
-        projects: [],
+        projects: projects.filter(p => p.category === 'restauracion-conservacion'),
       },
     ];
   }, [selectedProjects]);

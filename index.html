@@ -1,46 +1,53 @@
 <!DOCTYPE html>
 <html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Mapa interactivo | Flora Nativa Bahía Blanca</title>
-    <meta name="description" content="Mapa interactivo de proyectos de divulgación de la flora nativa de Argentina" />
-    <meta name="author" content="Flora Nativa Bahía Blanca" />
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="preconnect" href="https://raw.githubusercontent.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=PT+Sans:wght@400;700&family=PT+Serif:wght@400;700&display=swap"
-      rel="stylesheet"
-    />
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mapa interactivo | Flora Nativa Bahía Blanca</title>
+  <meta name="description" content="Mapa interactivo de proyectos de divulgación de la flora nativa de Argentina" />
+  <meta name="author" content="Flora Nativa Bahía Blanca" />
 
-    <meta property="og:title" content="Mapa interactivo" />
-    <meta property="og:description" content="Mapa interactivo de proyectos de divulgación de la flora nativa de Argentina" />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://argentina.floranativabb.com.ar/og-image.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://raw.githubusercontent.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=PT+Sans:wght@400;700&family=PT+Serif:wght@400;700&display=swap"
+    rel="stylesheet" />
 
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:image" content="https://argentina.floranativabb.com.ar/og-image.png" />
-    
-    <meta property="og:locale" content="es_ar" />
-    <meta property="og:url" content="https://argentina.floranativabb.com.ar/" />
-    <meta property="og:site_name" content="Flora Nativa Bahía Blanca" />
-    <meta property="og:site" content="Flora Nativa Bahía Blanca" />
-    <meta property="og:type" content="website" />
+  <meta property="og:title" content="Mapa interactivo" />
+  <meta property="og:description"
+    content="Mapa interactivo de proyectos de divulgación de la flora nativa de Argentina" />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://argentina.floranativabb.com.ar/og-image.png" />
 
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-H64Z0VZDJZ"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-H64Z0VZDJZ');
-    </script>
-  </head>
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:image" content="https://argentina.floranativabb.com.ar/og-image.png" />
 
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+  <meta property="og:locale" content="es_ar" />
+  <meta property="og:url" content="https://argentina.floranativabb.com.ar/" />
+  <meta property="og:site_name" content="Flora Nativa Bahía Blanca" />
+  <meta property="og:site" content="Flora Nativa Bahía Blanca" />
+  <meta property="og:type" content="website" />
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) {
+      w[l] = w[l] || []; w[l].push({
+        'gtm.start':
+          new Date().getTime(), event: 'gtm.js'
+      }); var f = d.getElementsByTagName(s)[0],
+        j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src =
+          'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f);
+    })(window, document, 'script', 'dataLayer', 'GTM-NWFNVZ2F');</script>
+  <!-- End Google Tag Manager -->
+</head>
+
+<body>
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NWFNVZ2F" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
 </html>

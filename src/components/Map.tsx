@@ -616,7 +616,7 @@ const Map = () => {
           </a>{' '}
           en nuestro blog. Si conocés o formás parte de un proyecto que te gustaría incluir en este mapa, completa{' '}
           <a
-            href="https://floranativabb.com.ar/contacto/"
+            href="https://forms.gle/5RnfPpdfeHeXaszYA"
             className="text-emerald-700 underline-offset-4 hover:text-emerald-800 hover:underline"
             target="_blank"
             rel="noreferrer"
